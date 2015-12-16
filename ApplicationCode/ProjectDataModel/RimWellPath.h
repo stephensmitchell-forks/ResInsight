@@ -100,6 +100,11 @@ private:
  
     caf::PdmField<QString>              m_surveyType;
 
+    caf::PdmField<double>               m_depthOffset;
+    caf::PdmField<double>               m_eastOffset;
+    caf::PdmField<double>               m_northOffset;
+
     cvf::ref<RigWellPath>               m_wellPath;
+    cvf::Vec3d                          m_oldWellPathOffset;
     cvf::ref<RivWellPathPartMgr>        m_wellPathPartMgr;
 };

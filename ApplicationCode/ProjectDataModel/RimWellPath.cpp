@@ -34,6 +34,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QMessageBox>
+#include "RimWellLogExtractionCurve.h"
 
 CAF_PDM_SOURCE_INIT(RimWellPath, "WellPath");
 
@@ -90,6 +91,17 @@ RimWellPath::RimWellPath()
     CAF_PDM_InitFieldNoDefault(&m_wellLogFile,      "WellLogFile",  "Well Log File", "", "", "");
     m_wellLogFile.uiCapability()->setUiHidden(true);
 
+    CAF_PDM_InitField(&m_depthOffset, "DepthOffset", 0.0, "Depth Offset", "", "", "");
+    m_depthOffset.xmlCapability()->setIOWritable(false);
+    m_depthOffset.xmlCapability()->setIOReadable(false);
+    CAF_PDM_InitField(&m_eastOffset , "EastOffset" , 0.0, "East Offset", "", "", "");
+    m_eastOffset.xmlCapability()->setIOWritable(false);
+    m_eastOffset.xmlCapability()->setIOReadable(false);
+    CAF_PDM_InitField(&m_northOffset, "NorthOffset", 0.0, "North Offset", "", "", "");
+    m_northOffset.xmlCapability()->setIOWritable(false);
+    m_northOffset.xmlCapability()->setIOReadable(false);
+
+    m_oldWellPathOffset = cvf::Vec3d::ZERO;
     m_wellPath = NULL;
 }
 
@@ -161,6 +173,31 @@ RivWellPathPartMgr* RimWellPath::partMgr()
 //--------------------------------------------------------------------------------------------------
 void RimWellPath::fieldChangedByUi(const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue)
 {
+    if (&m_depthOffset == changedField ||
+        &m_eastOffset == changedField ||
+        &m_northOffset == changedField)
+    {
+        cvf::Vec3d newOffset = cvf::Vec3d(m_eastOffset(), m_northOffset(), -m_depthOffset);
+        cvf::Vec3d newDifference = newOffset - m_oldWellPathOffset;
+        for(size_t pIdx = 0; pIdx < m_wellPath->m_wellPathPoints.size(); ++pIdx)
+        {
+            m_wellPath->m_wellPathPoints[pIdx] += newDifference;
+        }
+        m_oldWellPathOffset = newOffset;
+
+        RimProject* proj; 
+        this->firstAnchestorOrThisOfType(proj);
+        if (proj) proj->mainPlotCollection()->wellLogPlotCollection()->removeExtractors(m_wellPath.p());
+
+        std::vector<caf::PdmObjectHandle*> reffingObjects; 
+        this->objectsWithReferringPtrFields(reffingObjects);
+
+        for (size_t i = 0; i < reffingObjects.size(); ++i)
+        {
+            RimWellLogExtractionCurve* curve = dynamic_cast<RimWellLogExtractionCurve*>( reffingObjects[i]);
+            if (curve) curve->updatePlotData();
+        }
+    }
     partMgr()->scheduleGeometryRegen();
 
     RimProject* proj;
