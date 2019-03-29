@@ -243,8 +243,6 @@ void RicSummaryCurveCreatorSplitterUi::configureAndUpdateFields(int widgetStartI
 
             if (fieldEditor)
             {
-                fieldEditor->setUiField(field);
-
                 // Place the widget(s) into the correct parent and layout
                 QWidget* fieldCombinedWidget = fieldEditor->combinedWidget();
 
