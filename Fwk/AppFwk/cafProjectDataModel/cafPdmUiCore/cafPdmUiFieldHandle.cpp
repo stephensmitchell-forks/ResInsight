@@ -62,10 +62,12 @@ void PdmUiFieldHandle::notifyFieldChanged(const QVariant& oldFieldValue, const Q
         if (uiObjHandle)
         {
             uiObjHandle->fieldChangedByUi(fieldHandle, oldFieldValue, newFieldValue);
-            uiObjHandle->updateConnectedEditors();
+
+            // No longer neccesary. Leaving it out causes trouble in some cases. investigation is needed:
+            // uiObjHandle->updateConnectedEditors();
         }
 
-        // Update field editors
+        // Update connected field editors or their parent editors, to make  the ui reflect the change
         this->updateConnectedEditors();
 
         PdmUiModelChangeDetector::instance()->setModelChanged();
