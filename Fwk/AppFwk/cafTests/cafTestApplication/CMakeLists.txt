@@ -6,10 +6,18 @@ project ( cafTestApplication )
 find_package( OpenGL )
 
 # Qt
+option (APPFWK_USE_QT5 OFF)
+
+if (APPFWK_USE_QT5)
 find_package(Qt5Core CONFIG QUIET)
+endif()
+
 if (Qt5Core_FOUND)
+	message ("******* AppFwk test is Building with Qt 5")
 	find_package(Qt5 CONFIG REQUIRED Core Gui OpenGL Widgets)
 else()
+	message ("******* AppFwk test is Building with Qt 4")
+
 	find_package(Qt4 COMPONENTS QtCore QtGui QtMain QtOpenGl REQUIRED)
     include(${QT_USE_FILE})
 endif(Qt5Core_FOUND)
@@ -111,14 +119,14 @@ if (Qt5Core_FOUND)
 else()
 	# Copy Qt Dlls
 	if (MSVC)
-	    set (QTLIBLIST QtCore QtGui QtOpenGl )
+	    set (QTLIBLIST QtCore QtGui QtOpenGl QtXml)
 	    foreach (qtlib ${QTLIBLIST})
 	        
 	        # Debug
-	        execute_process(COMMAND cmake -E copy_if_different ${QT_BINARY_DIR}/${qtlib}d4.dll ${CMAKE_BINARY_DIR}/Debug/${qtlib}d4.dll)
+	        execute_process(COMMAND cmake -E copy_if_different ${QT_BINARY_DIR}/${qtlib}d4.dll ${CMAKE_CURRENT_BINARY_DIR}/Debug/${qtlib}d4.dll)
 	        
 	        # Release
-	        execute_process(COMMAND cmake -E copy_if_different ${QT_BINARY_DIR}/${qtlib}4.dll ${CMAKE_BINARY_DIR}/Release/${qtlib}4.dll)
+	        execute_process(COMMAND cmake -E copy_if_different ${QT_BINARY_DIR}/${qtlib}4.dll ${CMAKE_CURRENT_BINARY_DIR}/Release/${qtlib}4.dll)
 	    endforeach( qtlib )
 	endif(MSVC)
 endif(Qt5Core_FOUND)
