@@ -30,6 +30,8 @@
 #include "cvfCamera.h"
 #include "cvfMatrix4.h"
 #include "cvfScene.h"
+#include "cvfMatrix3.h"
+#include "cvfViewport.h"
 
 //--------------------------------------------------------------------------------------------------
 ///
@@ -103,10 +105,76 @@ void RimViewManipulator::applySourceViewCameraOnDestinationViews( RimGridView*  
             trans.setTranslation( offset );
             destSceneBB.transform( trans );
 
+            // Continous view code
+
+            cvf::Vec3d splitProjectionOffset( 0, 0, 0 );
+            cvf::Vec3d splitVrpOffset( 0, 0, 0 );
+
+            if ( !sourceView->isPerspectiveView() )
+            {
+                double sourceFrustWidth;
+                {
+                    double frHeight = sourceView->viewer()->mainCamera()->frontPlaneFrustumHeight();
+                    double aspect   = sourceView->viewer()->mainCamera()->aspectRatio();
+                    sourceFrustWidth  = aspect * frHeight;
+                }
+
+                double destFrustWidth;
+                {
+                    double frHeight = destinationViewer->mainCamera()->frontPlaneFrustumHeight();
+                    double aspect   = destinationViewer->mainCamera()->aspectRatio();
+                    destFrustWidth  = aspect * frHeight;
+                }
+
+                double destFrustOffsett = sourceFrustWidth*0.5 + destFrustWidth*0.5;
+                cvf::Vec3d camRight = ((sourceCamViewRefPoint - sourceCamEye) ^ sourceCamUp).getNormalized();
+                splitProjectionOffset = destFrustOffsett * camRight;
+            }
+            else
+            {
+                #if 0
+                // Camera direction manipulation to control the slave view
+                double sourceFovX;
+                {
+                    double fovY = cvf::Math::toRadians( sourceView->viewer()->mainCamera()->fieldOfViewYDeg());
+                    double aspect   = sourceView->viewer()->mainCamera()->aspectRatio();
+                    sourceFovX  = aspect * fovY;
+                }
+
+                double destFovX;
+                {
+                    double fovY = cvf::Math::toRadians( destinationViewer->mainCamera()->fieldOfViewYDeg());
+                    double aspect   = destinationViewer->mainCamera()->aspectRatio();
+                    destFovX  = aspect * fovY;
+                }
+
+                double destAngularOffset = sourceFovX*0.5 + destFovX*0.5;
+                cvf::Mat3d rot = cvf::Mat3d::fromRotation(sourceCamUp, -destAngularOffset);
+                cvf::Vec3d newVrpRelativeEye = (sourceCamViewRefPoint - sourceCamEye).getTransformedVector(rot);
+                cvf::Vec3d newVrp = sourceCamEye + newVrpRelativeEye;
+
+                splitVrpOffset = newVrp - sourceCamViewRefPoint;
+
+                #else
+
+                // Manipulate slave view frustum 
+                
+                cvf::Camera* sourceCam = sourceView->viewer()->mainCamera();
+                double sourceFrustumHeight = sourceCam->frontPlaneFrustumHeight();
+                double top = sourceFrustumHeight/2;
+                double bottom = -sourceFrustumHeight/2;
+                double left = sourceFrustumHeight * sourceCam->aspectRatio()/2;
+                double right = left + ((left*2)/sourceCam->viewport()->width())*destinationViewer->mainCamera()->viewport()->width();
+
+                destinationViewer->mainCamera()->setProjectionAsCustomFrustum( left, right, bottom,top, sourceCam->nearPlane(), sourceCam->farPlane());
+                
+                #endif
+            }
+
             if ( isBoundingBoxesOverlappingOrClose( sourceSceneBB, destSceneBB ) )
             {
-                destinationViewer->mainCamera()->setFromLookAt( destinationCamEye,
-                                                                destinationCamViewRefPoint,
+                destinationViewer->mainCamera()->setFromLookAt( destinationCamEye +splitProjectionOffset,
+                                                                destinationCamViewRefPoint + splitProjectionOffset + splitVrpOffset,
                                                                 sourceCamUp );
             }
             else

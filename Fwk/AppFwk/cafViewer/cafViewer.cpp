@@ -418,7 +418,7 @@ void caf::Viewer::optimizeClippingPlanes()
     {
         m_mainCamera->setProjectionAsPerspective(m_cameraFieldOfViewYDeg, nearPlaneDist, farPlaneDist);
     }
-    else
+    else if (m_mainCamera->projection() == cvf::Camera::ORTHO)
     {
         m_mainCamera->setProjectionAsOrtho(m_mainCamera->frontPlaneFrustumHeight(), nearPlaneDist, farPlaneDist);
     }

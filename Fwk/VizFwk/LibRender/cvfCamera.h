@@ -59,7 +59,8 @@ public:
     enum ProjectionType
     {
         PERSPECTIVE,            ///< Perspective projection
-        ORTHO                   ///< Orthographic (parallel) projection
+        ORTHO,                   ///< Orthographic (parallel) projection
+        CUSTOM_FRUSTUM
     };
 
 public:
@@ -77,6 +78,7 @@ public:
 
     ProjectionType  projection() const;
     void            setProjectionAsPerspective(double fieldOfViewYDeg, double nearPlane, double farPlane);
+    void            setProjectionAsCustomFrustum(double left, double right, double bottom, double top, double nearPlane, double farPlane);
     void            setProjectionAsOrtho(double height, double nearPlane, double farPlane);
     void            setProjectionAsUnitOrtho();
     void            setProjectionAsPixelExact2D();

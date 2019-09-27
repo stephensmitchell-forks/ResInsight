@@ -219,6 +219,23 @@ void Camera::setProjectionAsPerspective(double fieldOfViewYDeg, double nearPlane
 
 
 //--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
+void Camera::setProjectionAsCustomFrustum(double left, double right, double bottom, double top, double nearPlane, double farPlane)
+{
+    CVF_ASSERT(nearPlane > 0);
+    CVF_ASSERT(farPlane > nearPlane);
+
+    m_projectionType = CUSTOM_FRUSTUM;
+    m_fieldOfViewYDeg = Math::toDegrees(Math::atan(std::max(fabs(bottom), fabs(top))/ nearPlane )); // Use "Total" fov 
+    m_nearPlane = nearPlane;
+    m_farPlane = farPlane;
+    m_frontPlaneFrustumHeight = 2*std::max(fabs(bottom), fabs(top));
+
+    m_projectionMatrix = createFrustumMatrix( left, right, bottom, top, m_nearPlane, m_farPlane);
+}
+
+//--------------------------------------------------------------------------------------------------
 /// Setup an orthographic projection
 ///
 /// This works similar to glOrtho().
