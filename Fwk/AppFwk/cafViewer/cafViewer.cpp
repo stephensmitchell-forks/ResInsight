@@ -76,6 +76,7 @@
 #include <QDebug>
 #include <QHBoxLayout>
 #include <QInputEvent>
+#include "cvfRenderingScissor.h"
 
 namespace caf
 {
@@ -158,13 +159,15 @@ caf::Viewer::Viewer(const QGLFormat& format, QWidget* parent)
     m_mainCamera->setFromLookAt(cvf::Vec3d(0,0,-1), cvf::Vec3d(0,0,0), cvf::Vec3d(0,1,0));
     m_comparisonMainCamera = new cvf::Camera;
     m_comparisonMainCamera->setFromLookAt(cvf::Vec3d(0,0,-1), cvf::Vec3d(0,0,0), cvf::Vec3d(0,1,0));
-    m_comparisonMainCamera->viewport()->enableScissorTest(true);
 
     m_renderingSequence = new cvf::RenderSequence();
     m_renderingSequence->setDefaultFFLightPositional(cvf::Vec3f(0.5, 5.0, 7.0));
 
     m_mainRendering = new cvf::Rendering("Main Rendering");
     m_comparisonMainRendering = new cvf::Rendering("Comparison Rendering");
+
+    m_comparisonRenderingScissor = new cvf::RenderingScissor;
+    m_comparisonMainRendering->setRenderingScissor(m_comparisonRenderingScissor.p());
 
     m_animationControl = new caf::FrameAnimationControl(this);
     connect(m_animationControl, SIGNAL(changeFrame(int)), SLOT(slotSetCurrentFrame(int)));
@@ -303,6 +306,14 @@ cvf::Camera* caf::Viewer::mainCamera()
 //--------------------------------------------------------------------------------------------------
 /// 
 //--------------------------------------------------------------------------------------------------
+cvf::Camera* caf::Viewer::comparisonMainCamera()
+{
+    return m_comparisonMainCamera.p();
+}
+
+//--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
 void caf::Viewer::setComparisonViewOffsett(const cvf::Vec3d& offset)
 {
     m_comparisonViewOffsett = offset;
@@ -379,11 +390,11 @@ void caf::Viewer::updateCamera(int width, int height)
 
     m_mainCamera->viewport()->set(0, 0, width, height);
     m_comparisonMainCamera->viewport()->set(0, 0, width, height);
-    m_comparisonMainCamera->viewport()->setScissorRectangle( static_cast<int>( width  * m_comparisonWindowNormalizedX),
-                                                             static_cast<int>( height * m_comparisonWindowNormalizedY),
-                                                             static_cast<int>( width  * m_comparisonWindowNormalizedWidth),
-                                                             static_cast<int>( height * m_comparisonWindowNormalizedHeight));
-    
+    m_comparisonRenderingScissor->setScissorRectangle(static_cast<int>(width  * m_comparisonWindowNormalizedX),
+                                            static_cast<int>(height * m_comparisonWindowNormalizedY),
+                                            static_cast<int>(width  * m_comparisonWindowNormalizedWidth),
+                                            static_cast<int>(height * m_comparisonWindowNormalizedHeight));
+
     if (m_mainCamera->projection() == cvf::Camera::PERSPECTIVE)
     {
         m_mainCamera->setProjectionAsPerspective(m_cameraFieldOfViewYDeg, m_mainCamera->nearPlane(), m_mainCamera->farPlane());

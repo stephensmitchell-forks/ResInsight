@@ -45,6 +45,7 @@
 
 #include "cvfOpenGL.h"
 #include "cafOpenGLWidget.h"
+#include "cvfRenderingScissor.h"
 
 
 namespace cvf {
@@ -87,7 +88,10 @@ public:
 
     QWidget*                layoutWidget() { return m_layoutWidget; } // Use this when putting it into something
     cvf::Camera*            mainCamera();
+    cvf::Camera*            comparisonMainCamera();
+
     void                    setComparisonViewOffsett(const cvf::Vec3d& offset);
+    const cvf::Vec3d        comparisonViewOffsett() { return m_comparisonViewOffsett; }
     void                    setComparisonViewScreenArea(int normalizedX, int normalizedY, uint normalizedWidth, uint normalizedHeight);
 
     // Set the main scene : the scene active when the animation is not active. (Stopped)
@@ -246,6 +250,7 @@ private:
     cvf::ref<cvf::Camera>               m_comparisonMainCamera;
 
     cvf::Vec3d                          m_comparisonViewOffsett;
+    cvf::ref<cvf::RenderingScissor>     m_comparisonRenderingScissor;
 
     // Poi visualization
     cvf::ref<PointOfInterestVisualizer> m_poiVisualizationManager;
