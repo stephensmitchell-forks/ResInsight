@@ -212,15 +212,15 @@ void Rendering::render(OpenGLContext* oglContext)
 #endif
     }
 
-    // Update dynamic uniforms and dynamic uniform sets
-    // -------------------------------------------------------------------------
-    updateDynamicUniformSets();
-    updateAndCombineGlobalDynamicUniformSets();
-
     // Setup camera and view
     // -------------------------------------------------------------------------
     m_camera->viewport()->applyOpenGL(oglContext, m_clearMode);
     m_camera->applyOpenGL();
+
+    // Update dynamic uniforms and dynamic uniform sets
+    // -------------------------------------------------------------------------
+    updateDynamicUniformSets();
+    updateAndCombineGlobalDynamicUniformSets();
 
 
     // Build the render queue
