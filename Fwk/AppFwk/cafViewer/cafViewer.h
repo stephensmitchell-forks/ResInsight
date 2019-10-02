@@ -262,9 +262,6 @@ private:
     float m_comparisonWindowNormalizedWidth;
     float m_comparisonWindowNormalizedHeight;
 
-
-    cvf::ref<ScissorChanger>            m_comparisonScissor;
-
     // Offscreen render objects
     cvf::ref<cvf::FramebufferObject>    m_offscreenFbo;
     cvf::ref<cvf::Texture>              m_offscreenTexture;

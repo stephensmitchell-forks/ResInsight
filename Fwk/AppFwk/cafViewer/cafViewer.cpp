@@ -104,49 +104,6 @@ private:
 };
 
 
-class ScissorChanger: public cvf::DynamicUniformSet
-{
-public:
-    ScissorChanger()
-        : m_isScissorEnabled(false)
-        , m_scissorX(0)
-        , m_scissorY(0)
-        , m_scissorWidth(0)
-        , m_scissorHeight(0)
-    {
-    }
-
-    ~ScissorChanger() override {}
-
-    void  setScissorRectangle(int x, int y, uint width, uint height)
-    {
-        m_scissorX = x; 
-        m_scissorY = y; 
-        m_scissorWidth = width; 
-        m_scissorHeight = height;
-    }
-
-    void  enableScissorTest(bool enable)
-    {
-        m_isScissorEnabled = enable;
-    }
-
-    void update(cvf::Rendering* rendering) override 
-    { 
-        rendering->camera()->viewport()->setScissorRectangle(m_scissorX, m_scissorY, m_scissorWidth, m_scissorHeight);
-        rendering->camera()->viewport()->enableScissorTest(m_isScissorEnabled);
-    };      
-
-private:
-    cvf::UniformSet* uniformSet() override { return nullptr; }
-
-    bool        m_isScissorEnabled;
-    int         m_scissorX;
-    int         m_scissorY;
-    uint        m_scissorWidth;
-    uint        m_scissorHeight;
-};
-
 }
 
 std::list<caf::Viewer*> caf::Viewer::sm_viewers;
@@ -174,7 +131,7 @@ caf::Viewer::Viewer(const QGLFormat& format, QWidget* parent)
     m_parallelProjectionLightDirection(0, 0, -1), // Light directly from behind
     m_comparisonViewOffsett(0, 0, 0),
     m_comparisonWindowNormalizedX(0.5),
-    m_comparisonWindowNormalizedY(0.5),
+    m_comparisonWindowNormalizedY(0.0),
     m_comparisonWindowNormalizedWidth(1.0),
     m_comparisonWindowNormalizedHeight(1.0)
 {
@@ -196,8 +153,6 @@ caf::Viewer::Viewer(const QGLFormat& format, QWidget* parent)
     setFocusPolicy(Qt::ClickFocus);
 
     m_globalUniformSet = new GlobalViewerDynUniformSet();
-    m_comparisonScissor = new ScissorChanger();
-    m_comparisonScissor->enableScissorTest(true);
 
     m_mainCamera = new cvf::Camera;
     m_mainCamera->setFromLookAt(cvf::Vec3d(0,0,-1), cvf::Vec3d(0,0,0), cvf::Vec3d(0,1,0));
@@ -255,9 +210,7 @@ void caf::Viewer::setupMainRendering()
     m_comparisonMainRendering->setRenderQueueSorter(new cvf::RenderQueueSorterBasic(cvf::RenderQueueSorterBasic::EFFECT_ONLY));
 
     m_mainRendering->addGlobalDynamicUniformSet(m_globalUniformSet.p());
-    m_mainRendering->addDynamicUniformSet(new ScissorChanger());
     m_comparisonMainRendering->addGlobalDynamicUniformSet(m_globalUniformSet.p());
-    m_comparisonMainRendering->addDynamicUniformSet(m_comparisonScissor.p());
 
     // Set fixed function rendering if QGLFormat does not support directRendering
     if (!this->format().directRendering())
@@ -366,6 +319,7 @@ void caf::Viewer::setComparisonViewScreenArea(int normalizedX, int normalizedY, 
     m_comparisonWindowNormalizedHeight = normalizedHeight;
 
     updateCamera(width(), height());
+    update();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -425,11 +379,11 @@ void caf::Viewer::updateCamera(int width, int height)
 
     m_mainCamera->viewport()->set(0, 0, width, height);
     m_comparisonMainCamera->viewport()->set(0, 0, width, height);
-    //m_comparisonMainCamera->viewport()->setScissorRectangle( static_cast<int>( width  * m_comparisonWindowNormalizedX),
-    //                                                         static_cast<int>( height * m_comparisonWindowNormalizedY),
-    //                                                         static_cast<int>( width  * m_comparisonWindowNormalizedWidth),
-    //                                                         static_cast<int>( height * m_comparisonWindowNormalizedHeight));
-    //
+    m_comparisonMainCamera->viewport()->setScissorRectangle( static_cast<int>( width  * m_comparisonWindowNormalizedX),
+                                                             static_cast<int>( height * m_comparisonWindowNormalizedY),
+                                                             static_cast<int>( width  * m_comparisonWindowNormalizedWidth),
+                                                             static_cast<int>( height * m_comparisonWindowNormalizedHeight));
+    
     if (m_mainCamera->projection() == cvf::Camera::PERSPECTIVE)
     {
         m_mainCamera->setProjectionAsPerspective(m_cameraFieldOfViewYDeg, m_mainCamera->nearPlane(), m_mainCamera->farPlane());
@@ -707,8 +661,6 @@ void caf::Viewer::resizeGL(int width, int height)
         m_quadRendering->camera()->viewport()->set(0, 0, width, height);
     }
 
-    m_comparisonScissor->setScissorRectangle(0+width/2, 0, width/2, height);
-
     updateCamera(width, height);
 }
 
@@ -805,6 +757,12 @@ void caf::Viewer::paintEvent(QPaintEvent* event)
     }
 
     optimizeClippingPlanes();
+
+    m_renderingSequence->removeRendering(m_comparisonMainRendering.p());
+    if ( m_comparisonMainRendering->scene() )
+    {
+        m_renderingSequence->insertRendering( m_quadRendering.p(), m_comparisonMainRendering.p());
+    }
 
     if ( m_poiVisualizationManager.notNull() )
     {
