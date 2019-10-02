@@ -188,7 +188,7 @@ void RimGeoMechView::updateScaleTransform()
 
     this->scaleTransform()->setLocalTransform( scale );
 
-    if ( m_viewer ) m_viewer->updateCachedValuesInScene();
+    if ( nativeOrOverrideViewer() ) nativeOrOverrideViewer()->updateCachedValuesInScene();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -233,7 +233,7 @@ QString RimGeoMechView::createAutoName() const
 //--------------------------------------------------------------------------------------------------
 void RimGeoMechView::createDisplayModel()
 {
-    if ( m_viewer.isNull() ) return;
+    if ( nativeOrOverrideViewer() == nullptr ) return;
 
     if ( !( m_geomechCase && m_geomechCase->geoMechData() && m_geomechCase->geoMechData()->femParts() ) ) return;
 
@@ -244,7 +244,7 @@ void RimGeoMechView::createDisplayModel()
     // Remove all existing animation frames from the viewer.
     // The parts are still cached in the RivReservoir geometry and friends
 
-    m_viewer->removeAllFrames();
+    nativeOrOverrideViewer()->removeAllFrames(isUsingOverrideViewer());
 
     if ( isTimeStepDependentDataVisible() )
     {
@@ -255,14 +255,14 @@ void RimGeoMechView::createDisplayModel()
         {
             cvf::ref<cvf::Scene> scene = new cvf::Scene;
             scene->addModel( new cvf::ModelBasicList );
-            m_viewer->addFrame( scene.p() );
+            nativeOrOverrideViewer()->addFrame( scene.p(), isUsingOverrideViewer()  );
         }
     }
 
     // Set the Main scene in the viewer. Used when the animation is in "Stopped" state
 
     cvf::ref<cvf::Scene> mainScene = new cvf::Scene;
-    m_viewer->setMainScene( mainScene.p() );
+    nativeOrOverrideViewer()->setMainScene( mainScene.p(), isUsingOverrideViewer() );
 
     // Grid model
     cvf::ref<cvf::ModelBasicList> mainSceneGridVizModel = new cvf::ModelBasicList;
@@ -279,19 +279,19 @@ void RimGeoMechView::createDisplayModel()
     m_wellPathPipeVizModel->removeAllParts();
     addWellPathsToModel( m_wellPathPipeVizModel.p(), femBBox );
 
-    m_viewer->addStaticModelOnce( m_wellPathPipeVizModel.p() );
+    nativeOrOverrideViewer()->addStaticModelOnce( m_wellPathPipeVizModel.p() );
 
     // Cross sections
 
     m_crossSectionVizModel->removeAllParts();
     m_crossSectionCollection->appendPartsToModel( *this, m_crossSectionVizModel.p(), scaleTransform() );
-    m_viewer->addStaticModelOnce( m_crossSectionVizModel.p() );
+    nativeOrOverrideViewer()->addStaticModelOnce( m_crossSectionVizModel.p() );
 
     // If the animation was active before recreating everything, make viewer view current frame
 
     if ( isTimeStepDependentDataVisible() )
     {
-        m_viewer->setCurrentFrame( m_currentTimeStep );
+        if (viewer()) viewer()->setCurrentFrame( m_currentTimeStep );
     }
     else
     {
@@ -320,9 +320,9 @@ void RimGeoMechView::updateCurrentTimeStep()
 
     if ( this->isTimeStepDependentDataVisible() )
     {
-        if ( m_viewer )
+        if ( nativeOrOverrideViewer() )
         {
-            cvf::Scene* frameScene = m_viewer->frame( m_currentTimeStep );
+            cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer()  );
             if ( frameScene )
             {
                 {
@@ -391,7 +391,7 @@ void RimGeoMechView::updateCurrentTimeStep()
         m_vizLogic->updateStaticCellColors( -1 );
         m_crossSectionCollection->applySingleColorEffect();
 
-        m_viewer->animationControl()->slotPause(); // To avoid animation timer spinning in the background
+        nativeOrOverrideViewer()->animationControl()->slotPause(); // To avoid animation timer spinning in the background
     }
 
     m_overlayInfoConfig()->update3DInfo();
@@ -421,8 +421,8 @@ void RimGeoMechView::resetLegendsInViewer()
 {
     this->cellResult()->legendConfig->recreateLegend();
 
-    m_viewer->removeAllColorLegends();
-    m_viewer->addColorLegendToBottomLeftCorner( this->cellResult()->legendConfig->titledOverlayFrame() );
+    nativeOrOverrideViewer()->removeAllColorLegends();
+    nativeOrOverrideViewer()->addColorLegendToBottomLeftCorner( this->cellResult()->legendConfig->titledOverlayFrame() );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -430,15 +430,15 @@ void RimGeoMechView::resetLegendsInViewer()
 //--------------------------------------------------------------------------------------------------
 void RimGeoMechView::updateLegends()
 {
-    if ( m_viewer )
+    if ( nativeOrOverrideViewer() )
     {
-        m_viewer->removeAllColorLegends();
+        nativeOrOverrideViewer()->removeAllColorLegends();
 
         this->updateLegendTextAndRanges( cellResult()->legendConfig(), m_currentTimeStep() );
 
         if ( cellResult()->hasResult() && cellResult()->legendConfig()->showLegend() )
         {
-            m_viewer->addColorLegendToBottomLeftCorner( cellResult()->legendConfig->titledOverlayFrame() );
+            nativeOrOverrideViewer()->addColorLegendToBottomLeftCorner( cellResult()->legendConfig->titledOverlayFrame() );
         }
 
         if ( tensorResults()->showTensors() )
@@ -448,7 +448,7 @@ void RimGeoMechView::updateLegends()
             if ( tensorResults()->vectorColors() == RimTensorResults::RESULT_COLORS &&
                  tensorResults()->arrowColorLegendConfig()->showLegend() )
             {
-                m_viewer->addColorLegendToBottomLeftCorner(
+                nativeOrOverrideViewer()->addColorLegendToBottomLeftCorner(
                     m_tensorResults->arrowColorLegendConfig->titledOverlayFrame() );
             }
         }
@@ -678,10 +678,10 @@ void RimGeoMechView::convertCameraPositionFromOldProjectFiles()
             viewerToViewInterface->setCameraPointOfInterest( newPointOfInterest );
         }
 
-        if ( m_viewer )
+        if ( viewer() )
         {
-            m_viewer->mainCamera()->setViewMatrix( this->cameraPosition() );
-            m_viewer->setPointOfInterest( this->cameraPointOfInterest() );
+            viewer()->mainCamera()->setViewMatrix( this->cameraPosition() );
+            viewer()->setPointOfInterest( this->cameraPointOfInterest() );
         }
     }
 }

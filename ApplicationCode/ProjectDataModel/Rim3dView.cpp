@@ -58,6 +58,7 @@
 
 #include "cvfScene.h"
 #include <climits>
+#include "RimViewManipulator.h"
 
 namespace caf
 {
@@ -167,6 +168,32 @@ Rim3dView::~Rim3dView( void )
 RiuViewer* Rim3dView::viewer() const
 {
     return m_viewer;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+RiuViewer* Rim3dView::nativeOrOverrideViewer() const
+{
+    if (m_overrideViewer) return m_overrideViewer;
+
+    return m_viewer;
+}
+
+//--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
+void Rim3dView::setOverrideViewer(RiuViewer* overrideViewer)
+{
+    m_overrideViewer = overrideViewer;
+}
+
+//--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
+bool Rim3dView::isUsingOverrideViewer()
+{
+    return m_overrideViewer != nullptr;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -365,6 +392,21 @@ void Rim3dView::setCurrentTimeStepAndUpdate( int frameIndex )
 
     this->updateCurrentTimeStep();
 
+    if (isMasterView())
+    {
+        RimViewLinker* viewLinker = this->assosiatedViewLinker();
+        std::vector<RimGridView*> allLinkedViews;
+        viewLinker->allViews(allLinkedViews);
+        if (allLinkedViews.size() == 2)
+        {
+            RimGridView* depView = allLinkedViews[1];
+            depView->setOverrideViewer(viewer());
+            depView->updateCurrentTimeStep();
+            depView->setOverrideViewer(nullptr);
+            viewer()->setComparisonViewOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+        }
+    }
+
     RimProject* project;
     firstAncestorOrThisOfTypeAsserted( project );
     project->mainPlotCollection()->updateCurrentTimeStepInPlots();
@@ -406,12 +448,27 @@ void Rim3dView::setCurrentTimeStep( int frameIndex )
 void Rim3dView::updateCurrentTimeStepAndRedraw()
 {
     this->updateCurrentTimeStep();
+    
+    if (isMasterView())
+    {
+        RimViewLinker* viewLinker = this->assosiatedViewLinker();
+        std::vector<RimGridView*> allLinkedViews;
+        viewLinker->allViews(allLinkedViews);
+        if (allLinkedViews.size() == 2)
+        {
+            RimGridView* depView = allLinkedViews[1];
+            depView->setOverrideViewer(viewer());
+            depView->updateCurrentTimeStep();
+            depView->setOverrideViewer(nullptr);
+            viewer()->setComparisonViewOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+        }
+    }
 
     RimProject* project;
     firstAncestorOrThisOfTypeAsserted( project );
     project->mainPlotCollection()->updateCurrentTimeStepInPlots();
 
-    if ( m_viewer ) m_viewer->update();
+    if ( nativeOrOverrideViewer() ) nativeOrOverrideViewer()->update();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -419,7 +476,7 @@ void Rim3dView::updateCurrentTimeStepAndRedraw()
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::createDisplayModelAndRedraw()
 {
-    if ( m_viewer )
+    if ( nativeOrOverrideViewer() )
     {
         this->clampCurrentTimestep();
 
@@ -430,8 +487,23 @@ void Rim3dView::createDisplayModelAndRedraw()
         if ( m_cameraPosition().isIdentity() )
         {
             setDefaultView();
-            m_cameraPosition        = m_viewer->mainCamera()->viewMatrix();
-            m_cameraPointOfInterest = m_viewer->pointOfInterest();
+            m_cameraPosition        = nativeOrOverrideViewer()->mainCamera()->viewMatrix();
+            m_cameraPointOfInterest = nativeOrOverrideViewer()->pointOfInterest();
+        }
+
+        if (isMasterView())
+        {
+            RimViewLinker* viewLinker = this->assosiatedViewLinker();
+            std::vector<RimGridView*> allLinkedViews;
+            viewLinker->allViews(allLinkedViews);
+            if (allLinkedViews.size() == 2)
+            {
+                RimGridView* depView = allLinkedViews[1];
+                depView->setOverrideViewer(viewer());
+                depView->createDisplayModelAndRedraw();
+                depView->setOverrideViewer(nullptr);
+                viewer()->setComparisonViewOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+            }
         }
     }
 
@@ -763,7 +835,7 @@ void Rim3dView::addMeasurementToModel( cvf::ModelBasicList* wellPathModelBasicLi
     else
     {
         cvf::ref<caf::DisplayCoordTransform> transForm = displayCoordTransform();
-        m_measurementPartManager->appendGeometryPartsToModel( m_viewer->mainCamera(),
+        m_measurementPartManager->appendGeometryPartsToModel( nativeOrOverrideViewer()->mainCamera(),
                                                               wellPathModelBasicList,
                                                               transForm.p(),
                                                               ownerCase()->allCellsBoundingBox() );
@@ -804,13 +876,13 @@ bool Rim3dView::isMasterView() const
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::updateGridBoxData()
 {
-    if ( m_viewer && ownerCase() )
+    if ( nativeOrOverrideViewer() && ownerCase() )
     {
-        m_viewer->updateGridBoxData( scaleZ(),
-                                     ownerCase()->displayModelOffset(),
-                                     backgroundColor(),
-                                     showActiveCellsOnly() ? ownerCase()->activeCellsBoundingBox()
-                                                           : ownerCase()->allCellsBoundingBox() );
+        nativeOrOverrideViewer()->updateGridBoxData( scaleZ(),
+                                                     ownerCase()->displayModelOffset(),
+                                                     backgroundColor(),
+                                                     showActiveCellsOnly() ? ownerCase()->activeCellsBoundingBox()
+                                                                           : ownerCase()->allCellsBoundingBox() );
     }
 }
 
@@ -819,9 +891,9 @@ void Rim3dView::updateGridBoxData()
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::updateAnnotationItems()
 {
-    if ( m_viewer )
+    if ( nativeOrOverrideViewer() )
     {
-        m_viewer->updateAnnotationItems();
+        nativeOrOverrideViewer()->updateAnnotationItems();
     }
 }
 
@@ -834,24 +906,24 @@ void Rim3dView::updateScaling()
 
     this->updateGridBoxData();
 
-    if ( m_viewer )
+    if ( nativeOrOverrideViewer() )
     {
-        cvf::Vec3d poi = m_viewer->pointOfInterest();
+        cvf::Vec3d poi = nativeOrOverrideViewer()->pointOfInterest();
         cvf::Vec3d eye, dir, up;
-        eye = m_viewer->mainCamera()->position();
-        dir = m_viewer->mainCamera()->direction();
-        up  = m_viewer->mainCamera()->up();
+        eye = nativeOrOverrideViewer()->mainCamera()->position();
+        dir = nativeOrOverrideViewer()->mainCamera()->direction();
+        up  = nativeOrOverrideViewer()->mainCamera()->up();
 
         eye[2] = poi[2] * scaleZ() / this->scaleTransform()->worldTransform()( 2, 2 ) + ( eye[2] - poi[2] );
         poi[2] = poi[2] * scaleZ() / this->scaleTransform()->worldTransform()( 2, 2 );
 
-        m_viewer->mainCamera()->setFromLookAt( eye, eye + dir, up );
-        m_viewer->setPointOfInterest( poi );
+        nativeOrOverrideViewer()->mainCamera()->setFromLookAt( eye, eye + dir, up );
+        nativeOrOverrideViewer()->setPointOfInterest( poi );
 
         updateScaleTransform();
         createDisplayModelAndRedraw();
 
-        m_viewer->update();
+        nativeOrOverrideViewer()->update();
 
         updateZScaleLabel();
     }
@@ -864,7 +936,7 @@ void Rim3dView::updateZScaleLabel()
 {
     // Update Z scale label
     int scale = static_cast<int>( scaleZ() );
-    m_viewer->setZScale( scale );
+    nativeOrOverrideViewer()->setZScale( scale );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -875,7 +947,7 @@ void Rim3dView::updateMeasurement()
     if ( m_viewer )
     {
         appendMeasurementToModel();
-        m_viewer->update();
+        nativeOrOverrideViewer()->update();
     }
 }
 
@@ -886,9 +958,9 @@ void Rim3dView::createHighlightAndGridBoxDisplayModelWithRedraw()
 {
     createHighlightAndGridBoxDisplayModel();
 
-    if ( m_viewer )
+    if ( nativeOrOverrideViewer() )
     {
-        m_viewer->update();
+        nativeOrOverrideViewer()->update();
     }
 }
 
@@ -897,7 +969,7 @@ void Rim3dView::createHighlightAndGridBoxDisplayModelWithRedraw()
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::createHighlightAndGridBoxDisplayModel()
 {
-    m_viewer->removeStaticModel( m_highlightVizModel.p() );
+    nativeOrOverrideViewer()->removeStaticModel( m_highlightVizModel.p() );
 
     m_highlightVizModel->removeAllParts();
 
@@ -911,10 +983,10 @@ void Rim3dView::createHighlightAndGridBoxDisplayModel()
         }
 
         m_highlightVizModel->updateBoundingBoxesRecursive();
-        m_viewer->addStaticModelOnce( m_highlightVizModel.p() );
+        nativeOrOverrideViewer()->addStaticModelOnce( m_highlightVizModel.p() );
     }
 
-    m_viewer->showGridBox( m_showGridBox() );
+    nativeOrOverrideViewer()->showGridBox( m_showGridBox() );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -938,10 +1010,10 @@ void Rim3dView::setShowGridBox( bool showGridBox )
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::applyBackgroundColorAndFontChanges()
 {
-    if ( m_viewer != nullptr )
+    if ( nativeOrOverrideViewer() != nullptr )
     {
-        m_viewer->mainCamera()->viewport()->setClearColor( cvf::Color4f( backgroundColor() ) );
-        m_viewer->updateFonts();
+        nativeOrOverrideViewer()->mainCamera()->viewport()->setClearColor( cvf::Color4f( backgroundColor() ) );
+        nativeOrOverrideViewer()->updateFonts();
     }
     updateGridBoxData();
     updateAnnotationItems();
@@ -1002,8 +1074,8 @@ void Rim3dView::updateDisplayModelVisibility()
         mask |= intersectionFaultMeshBit;
     }
 
-    m_viewer->setEnableMask( mask );
-    m_viewer->update();
+    nativeOrOverrideViewer()->setEnableMask( mask );
+    nativeOrOverrideViewer()->update();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1152,9 +1224,9 @@ void Rim3dView::setMdiWindowGeometry( const RimMdiWindowGeometry& windowGeometry
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::appendAnnotationsToModel()
 {
-    if ( !m_viewer ) return;
+    if ( !nativeOrOverrideViewer() ) return;
 
-    cvf::Scene* frameScene = m_viewer->frame( m_currentTimeStep );
+    cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer() );
     if ( frameScene )
     {
         cvf::String name = "Annotations";
@@ -1174,9 +1246,9 @@ void Rim3dView::appendAnnotationsToModel()
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::appendMeasurementToModel()
 {
-    if ( !m_viewer ) return;
+    if ( !nativeOrOverrideViewer() ) return;
 
-    cvf::Scene* frameScene = m_viewer->frame( m_currentTimeStep );
+    cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer() );
     if ( frameScene )
     {
         cvf::String name = "Measurement";

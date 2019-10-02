@@ -76,6 +76,7 @@ namespace caf
 {
 
 class GlobalViewerDynUniformSet;
+class ScissorChanger;
 
 class Viewer : public caf::OpenGLWidget
 {
@@ -86,21 +87,23 @@ public:
 
     QWidget*                layoutWidget() { return m_layoutWidget; } // Use this when putting it into something
     cvf::Camera*            mainCamera();
+    void                    setComparisonViewOffsett(const cvf::Vec3d& offset);
+    void                    setComparisonViewScreenArea(int normalizedX, int normalizedY, uint normalizedWidth, uint normalizedHeight);
 
     // Set the main scene : the scene active when the animation is not active. (Stopped)
-    void                    setMainScene(cvf::Scene* scene);
-    cvf::Scene*             mainScene();
-    cvf::Scene*             currentScene(); // The scene currently rendered
+    void                    setMainScene(cvf::Scene* scene, bool isForComparisonView = false);
+    cvf::Scene*             mainScene( bool isForComparisonView = false );
+    cvf::Scene*             currentScene( bool isForComparisonView = false ); // The scene currently rendered
 
     // Frame scenes for animation control
-    void                    addFrame(cvf::Scene* scene);
-    size_t                  frameCount() const { return m_frameScenes.size(); }
-    cvf::Scene*             frame(size_t frameIndex); 
-    void                    removeAllFrames();
+    void                    addFrame(cvf::Scene* scene, bool isForComparisonView = false);
+    size_t                  frameCount() const { return std::max( m_frameScenes.size(), m_comparisonFrameScenes.size() ) ; }
+    cvf::Scene*             frame(size_t frameIndex, bool isForComparisonView = false); 
+    void                    removeAllFrames(bool isForComparisonView);
     int                     currentFrameIndex() const;
 
     // Static models to be shown in all frames
-    void                    addStaticModelOnce(cvf::Model* model);
+    void                    addStaticModelOnce(cvf::Model* model, bool isForComparisonView = false);
     void                    removeStaticModel(cvf::Model* model);
     void                    removeAllStaticModels();
 
@@ -157,6 +160,8 @@ public:
 
     QImage                  snapshotImage();
 
+    static void             copyCameraView(cvf::Camera* srcCamera, cvf::Camera* dstCamera);
+
 public slots:
     virtual void            slotSetCurrentFrame(int frameIndex);
     virtual void            slotEndAnimation();
@@ -170,6 +175,11 @@ protected:
 
     // Overridable methods to setup the render system
     virtual void            optimizeClippingPlanes();
+
+    bool calculateNearFarPlanes(const cvf::Rendering* rendering, 
+                                const cvf::Vec3d& navPointOfinterest, 
+                                double *farPlaneDist, 
+                                double *nearPlaneDist);
 
     // Standard overrides. Not for overriding
     void            resizeGL(int width, int height) override;
@@ -195,8 +205,8 @@ private:
     void                                setupMainRendering();
     void                                setupRenderingSequence();
     
-    void                                appendAllStaticModelsToFrame(cvf::Scene* scene);
-    void                                appendModelToAllFrames(cvf::Model* model);
+    void                                appendAllStaticModelsToFrame(cvf::Scene* scene, bool isForComparisonView = false);
+    void                                appendModelToAllFrames(cvf::Model* model, bool isForComparisonView = false);
     void                                removeModelFromAllFrames(cvf::Model* model);
 
     void                                updateCamera(int width, int height);
@@ -219,6 +229,7 @@ private:
     // System to make sure we share OpenGL resources
     static Viewer*                      sharedWidget();
     static cvf::OpenGLContextGroup*     contextGroup();
+
     static std::list<Viewer*>           sm_viewers;
     static cvf::ref<cvf::OpenGLContextGroup> 
                                         sm_openGLContextGroup;
@@ -227,6 +238,15 @@ private:
     cvf::Collection<cvf::Scene>         m_frameScenes;
     cvf::Collection<cvf::Model>         m_staticModels;
 
+    cvf::ref<cvf::Scene>                m_comparisonMainScene;
+    cvf::ref<cvf::Rendering>            m_comparisonMainRendering;
+
+    cvf::Collection<cvf::Scene>         m_comparisonFrameScenes;
+    cvf::Collection<cvf::Model>         m_comparisonStaticModels;
+    cvf::ref<cvf::Camera>               m_comparisonMainCamera;
+
+    cvf::Vec3d                          m_comparisonViewOffsett;
+
     // Poi visualization
     cvf::ref<PointOfInterestVisualizer> m_poiVisualizationManager;
 
@@ -234,6 +254,16 @@ private:
 
     cvf::ref<GlobalViewerDynUniformSet> m_globalUniformSet;
     cvf::Vec3f                          m_parallelProjectionLightDirection;
+
+    // Comparison view window
+
+    float m_comparisonWindowNormalizedX;
+    float m_comparisonWindowNormalizedY;
+    float m_comparisonWindowNormalizedWidth;
+    float m_comparisonWindowNormalizedHeight;
+
+
+    cvf::ref<ScissorChanger>            m_comparisonScissor;
 
     // Offscreen render objects
     cvf::ref<cvf::FramebufferObject>    m_offscreenFbo;

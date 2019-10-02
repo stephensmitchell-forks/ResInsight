@@ -67,7 +67,12 @@ Viewport::Viewport()
     m_height(0),
     m_clearColor(0.69f, 0.77f, 0.87f, 1.0f),
     m_clearDepth(1.0f),
-    m_clearStencil(0)
+    m_clearStencil(0),
+    m_isScissorEnabled(false),
+    m_scissorX(0),
+    m_scissorY(0),
+    m_scissorWidth(0),
+    m_scissorHeight(0)
 {
 }
 
@@ -218,10 +223,25 @@ void Viewport::applyOpenGL(OpenGLContext* oglContext, ClearMode clearMode)
         }
 
         // Must setup a scissor since the clear calls disregard the viewport settings
+
         GLboolean scissorWasOn = glIsEnabled(GL_SCISSOR_TEST);
         int scissorBox[4] = {0, 0, -1, -1};
         glGetIntegerv(GL_SCISSOR_BOX, scissorBox);
-        glScissor(static_cast<GLsizei>(m_x), static_cast<GLsizei>(m_y), static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height));
+        
+        if ( m_isScissorEnabled )
+        {
+            glScissor(static_cast<GLsizei>(m_scissorX),
+                      static_cast<GLsizei>(m_scissorY),
+                      static_cast<GLsizei>(m_scissorWidth),
+                      static_cast<GLsizei>(m_scissorHeight));
+        }
+        else
+        {
+            glScissor(static_cast<GLsizei>(m_x),
+                      static_cast<GLsizei>(m_y),
+                      static_cast<GLsizei>(m_width),
+                      static_cast<GLsizei>(m_height));
+        }
         glEnable(GL_SCISSOR_TEST);
 
         // Do the actual clear
@@ -254,9 +274,14 @@ void Viewport::applyOpenGL(OpenGLContext* oglContext, ClearMode clearMode)
 //             glDepthMask(GL_TRUE);
 //         }
 
-        // Restore scissor settings
-        if (!scissorWasOn) glDisable(GL_SCISSOR_TEST);
-        glScissor(scissorBox[0], scissorBox[1], scissorBox[2], scissorBox[3]); 
+        if ( !m_isScissorEnabled )
+        {
+            // Restore scissor settings
+            //if ( !scissorWasOn ) glDisable(GL_SCISSOR_TEST);
+            glDisable(GL_SCISSOR_TEST);
+
+            //glScissor(scissorBox[0], scissorBox[1], scissorBox[2], scissorBox[3]);
+        }
 
         CVF_CHECK_OGL(oglContext);
     }

@@ -105,9 +105,11 @@ public:
     caf::PdmField<caf::AppEnum<SurfaceModeType>>          surfaceMode;
 
     RiuViewer* viewer() const;
-
-    void    setName( const QString& name );
-    QString name() const;
+    RiuViewer* nativeOrOverrideViewer() const;
+    void       setOverrideViewer( RiuViewer* overrideViewer );
+    bool       isUsingOverrideViewer();
+    void       setName( const QString& name );
+    QString    name() const;
 
     int  id() const;
     void setId( int id );
@@ -224,7 +226,6 @@ protected: // Fields
     caf::PdmField<int> m_currentTimeStep;
 
 protected:
-    QPointer<RiuViewer> m_viewer;
 
     cvf::ref<cvf::ModelBasicList> m_wellPathPipeVizModel;
     cvf::ref<cvf::ModelBasicList> m_crossSectionVizModel;
@@ -282,6 +283,9 @@ private:
     void appendMeasurementToModel();
 
 private:
+    QPointer<RiuViewer> m_viewer;
+    QPointer<RiuViewer> m_overrideViewer;
+
     caf::PdmField<QString>                 m_name_OBSOLETE;
     caf::PdmChildField<RimViewNameConfig*> m_nameConfig;
     caf::PdmField<bool>                    m_disableLighting;

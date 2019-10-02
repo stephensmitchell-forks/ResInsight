@@ -129,6 +129,31 @@ void RimViewManipulator::applySourceViewCameraOnDestinationViews( RimGridView*  
 }
 
 //--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
+cvf::Vec3d RimViewManipulator::calculateEquivalentCamPosOffsett(Rim3dView* sourceView, Rim3dView* destView)
+{
+    cvf::Vec3d soffset          = cvf::Vec3d::ZERO;
+    RimCase*   sourceOwnerCase = sourceView->ownerCase();
+    if ( sourceOwnerCase )
+    {
+        soffset = sourceOwnerCase->displayModelOffset();
+        soffset.z() *= sourceView->scaleZ();
+    }
+
+    cvf::Vec3d doffset          = cvf::Vec3d::ZERO;
+
+    RimCase* destinationOwnerCase = destView->ownerCase();
+    if ( destinationOwnerCase )
+    {
+        doffset = destinationOwnerCase->displayModelOffset();
+        doffset.z() *= destView->scaleZ();
+    }
+
+    return soffset - doffset;
+}
+
+//--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
 bool RimViewManipulator::isBoundingBoxesOverlappingOrClose( const cvf::BoundingBox& sourceBB,

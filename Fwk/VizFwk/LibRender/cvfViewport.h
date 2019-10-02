@@ -71,6 +71,8 @@ public:
     Viewport();
 
     void        set(int x, int y, uint width, uint height);
+    void        setScissorRectangle(int x, int y, uint width, uint height) { m_scissorX = x; m_scissorY = y; m_scissorWidth = width; m_scissorHeight = height; }
+    void        enableScissorTest(bool enable) { m_isScissorEnabled = enable; }
 
     int         x() const;
     int         y() const;
@@ -93,6 +95,12 @@ private:
     int         m_y;
     uint        m_width;
     uint        m_height;
+
+    bool        m_isScissorEnabled;
+    int         m_scissorX;
+    int         m_scissorY;
+    uint        m_scissorWidth;
+    uint        m_scissorHeight;
 
     Color4f     m_clearColor;
     double      m_clearDepth;
