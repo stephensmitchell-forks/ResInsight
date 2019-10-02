@@ -61,18 +61,13 @@ namespace cvf {
 /// 
 //--------------------------------------------------------------------------------------------------
 Viewport::Viewport()
-:   m_x(0),
+    :   m_x(0),
     m_y(0),
     m_width(0),
     m_height(0),
     m_clearColor(0.69f, 0.77f, 0.87f, 1.0f),
     m_clearDepth(1.0f),
-    m_clearStencil(0),
-    m_isScissorEnabled(false),
-    m_scissorX(0),
-    m_scissorY(0),
-    m_scissorWidth(0),
-    m_scissorHeight(0)
+    m_clearStencil(0)
 {
 }
 
@@ -211,9 +206,9 @@ void Viewport::applyOpenGL(OpenGLContext* oglContext, ClearMode clearMode)
         if (clearFlags & GL_DEPTH_BUFFER_BIT)
         {
             glDepthMask(GL_TRUE);
-#ifndef CVF_OPENGL_ES
+            #ifndef CVF_OPENGL_ES
             glClearDepth(m_clearDepth);
-#endif  // CVF_OPENGL_ES
+            #endif  // CVF_OPENGL_ES
         }
 
         if (clearFlags & GL_STENCIL_BUFFER_BIT)
@@ -223,75 +218,47 @@ void Viewport::applyOpenGL(OpenGLContext* oglContext, ClearMode clearMode)
         }
 
         // Must setup a scissor since the clear calls disregard the viewport settings
-
-        int scissorBoxToRestore[4] = { 0, 0, -1, -1 };
-
-        if ( m_isScissorEnabled )
-        {
-            glScissor(static_cast<GLsizei>(m_scissorX),
-                      static_cast<GLsizei>(m_scissorY),
-                      static_cast<GLsizei>(m_scissorWidth),
-                      static_cast<GLsizei>(m_scissorHeight));
-        }
-        else
-        {
-            glGetIntegerv(GL_SCISSOR_BOX, scissorBoxToRestore);
-            glScissor(static_cast<GLsizei>(m_x),
-                      static_cast<GLsizei>(m_y),
-                      static_cast<GLsizei>(m_width),
-                      static_cast<GLsizei>(m_height));
-        }
+        GLboolean scissorWasOn = glIsEnabled(GL_SCISSOR_TEST);
+        int scissorBox[4] = {0, 0, -1, -1};
+        glGetIntegerv(GL_SCISSOR_BOX, scissorBox);
+        glScissor(static_cast<GLsizei>(m_x), static_cast<GLsizei>(m_y), static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height));
         glEnable(GL_SCISSOR_TEST);
 
         // Do the actual clear
         glClear(clearFlags);
 
-//         {
-//             // Code to draw a full screen quad into color buffer using FF
-//             // Experimented with this code when seeing problems with rendering to texture on ATI Catalys 11.3 where
-//             // it seemed that lazy clearing of color buffer was causing problems with depth peeling and glGenerateMipmap()
-//             glMatrixMode(GL_PROJECTION);
-//             glLoadIdentity();
-//             glMatrixMode(GL_MODELVIEW);
-//             glLoadIdentity();
-// 
-//             glDisable(GL_DEPTH_TEST);
-//             glDepthMask(GL_FALSE);
-//             glDisable(GL_LIGHTING);
-//             glColor3f(0, 1, 0);
-// 
-//             glBegin(GL_QUADS);
-//             {
-//                 glVertex2f(-1.0, -1.0); 
-//                 glVertex2f( 1.0, -1.0);
-//                 glVertex2f( 1.0, 1.0);
-//                 glVertex2f(-1.0, 1.0);
-//             }
-//             glEnd();
-// 
-//             glEnable(GL_DEPTH_TEST);
-//             glDepthMask(GL_TRUE);
-//         }
+        //         {
+        //             // Code to draw a full screen quad into color buffer using FF
+        //             // Experimented with this code when seeing problems with rendering to texture on ATI Catalys 11.3 where
+        //             // it seemed that lazy clearing of color buffer was causing problems with depth peeling and glGenerateMipmap()
+        //             glMatrixMode(GL_PROJECTION);
+        //             glLoadIdentity();
+        //             glMatrixMode(GL_MODELVIEW);
+        //             glLoadIdentity();
+        // 
+        //             glDisable(GL_DEPTH_TEST);
+        //             glDepthMask(GL_FALSE);
+        //             glDisable(GL_LIGHTING);
+        //             glColor3f(0, 1, 0);
+        // 
+        //             glBegin(GL_QUADS);
+        //             {
+        //                 glVertex2f(-1.0, -1.0); 
+        //                 glVertex2f( 1.0, -1.0);
+        //                 glVertex2f( 1.0, 1.0);
+        //                 glVertex2f(-1.0, 1.0);
+        //             }
+        //             glEnd();
+        // 
+        //             glEnable(GL_DEPTH_TEST);
+        //             glDepthMask(GL_TRUE);
+        //         }
 
-        if ( !m_isScissorEnabled )
-        {
-            glDisable(GL_SCISSOR_TEST);
-            glScissor(scissorBoxToRestore[0], scissorBoxToRestore[1], scissorBoxToRestore[2], scissorBoxToRestore[3]);
-        }
+        // Restore scissor settings
+        if (!scissorWasOn) glDisable(GL_SCISSOR_TEST);
+        glScissor(scissorBox[0], scissorBox[1], scissorBox[2], scissorBox[3]); 
 
         CVF_CHECK_OGL(oglContext);
-    }
-    else
-    {
-        if ( m_isScissorEnabled )
-        {
-            glScissor(static_cast<GLsizei>(m_scissorX),
-                      static_cast<GLsizei>(m_scissorY),
-                      static_cast<GLsizei>(m_scissorWidth),
-                      static_cast<GLsizei>(m_scissorHeight));
-            glEnable(GL_SCISSOR_TEST);
-            CVF_CHECK_OGL(oglContext);
-        }
     }
 }
 
