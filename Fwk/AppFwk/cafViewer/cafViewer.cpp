@@ -1253,6 +1253,7 @@ void caf::Viewer::removeStaticModel(cvf::Model* model)
     removeModelFromAllFrames(model);
     
     m_staticModels.erase(model);
+    m_comparisonStaticModels.erase(model);
 
     updateCachedValuesInScene();
 }
