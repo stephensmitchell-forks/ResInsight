@@ -1357,6 +1357,8 @@ void caf::Viewer::appendModelToAllFrames(cvf::Model* model, bool isForComparison
 //--------------------------------------------------------------------------------------------------
 void caf::Viewer::appendAllStaticModelsToFrame(cvf::Scene* scene, bool isForComparisonView )
 {
+    if (!scene) return;
+
     if ( !isForComparisonView )
     {
         for ( size_t i = 0; i < m_staticModels.size(); i++ )
