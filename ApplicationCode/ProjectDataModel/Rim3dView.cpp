@@ -21,6 +21,7 @@
 
 #include "RiaFieldHandleTools.h"
 #include "RiaGuiApplication.h"
+#include "RiaOptionItemFactory.h"
 #include "RiaPreferences.h"
 #include "RiaViewRedrawScheduler.h"
 
@@ -36,6 +37,7 @@
 #include "RimTools.h"
 #include "RimViewController.h"
 #include "RimViewLinker.h"
+#include "RimViewManipulator.h"
 #include "RimViewNameConfig.h"
 #include "RimWellPathCollection.h"
 
@@ -58,7 +60,6 @@
 
 #include "cvfScene.h"
 #include <climits>
-#include "RimViewManipulator.h"
 
 namespace caf
 {
@@ -132,6 +133,16 @@ Rim3dView::Rim3dView( void )
     m_viewId.uiCapability()->setUiReadOnly( true );
     m_viewId.capability<RicfFieldHandle>()->setIOWriteable( false );
 
+    CAF_PDM_InitField( &m_isComparisonViewEnabled, "EnableComparisonView", false, "Enable", "", "", "" );
+    CAF_PDM_InitFieldNoDefault( &m_comparisonView, "ComparisonView", "Comparison View", "", "", "" );
+    CAF_PDM_InitField( &m_isComparisonViewLinkingTimestep,
+                       "EnableComparisonViewTimestepLinking",
+                       true,
+                       "Link Timestep",
+                       "",
+                       "",
+                       "" );
+
     m_crossSectionVizModel = new cvf::ModelBasicList;
     m_crossSectionVizModel->setName( "CrossSectionModel" );
 
@@ -175,21 +186,21 @@ RiuViewer* Rim3dView::viewer() const
 //--------------------------------------------------------------------------------------------------
 RiuViewer* Rim3dView::nativeOrOverrideViewer() const
 {
-    if (m_overrideViewer) return m_overrideViewer;
+    if ( m_overrideViewer ) return m_overrideViewer;
 
     return m_viewer;
 }
 
 //--------------------------------------------------------------------------------------------------
-/// 
+///
 //--------------------------------------------------------------------------------------------------
-void Rim3dView::setOverrideViewer(RiuViewer* overrideViewer)
+void Rim3dView::setOverrideViewer( RiuViewer* overrideViewer )
 {
     m_overrideViewer = overrideViewer;
 }
 
 //--------------------------------------------------------------------------------------------------
-/// 
+///
 //--------------------------------------------------------------------------------------------------
 bool Rim3dView::isUsingOverrideViewer()
 {
@@ -346,6 +357,11 @@ void Rim3dView::defineUiOrdering( QString uiConfigName, caf::PdmUiOrdering& uiOr
     gridGroup->add( &meshMode );
     gridGroup->add( &surfaceMode );
 
+    caf::PdmUiGroup* compViewGroup = uiOrdering.addNewGroup( "Comparison View" );
+    compViewGroup->add( &m_isComparisonViewEnabled );
+    compViewGroup->add( &m_comparisonView );
+    compViewGroup->add( &m_isComparisonViewLinkingTimestep );
+
     uiOrdering.skipRemainingFields( true );
 }
 
@@ -392,20 +408,14 @@ void Rim3dView::setCurrentTimeStepAndUpdate( int frameIndex )
 
     this->updateCurrentTimeStep();
 
-    if (isMasterView())
+    if ( Rim3dView* depView = activeComparisonView() )
     {
-        RimViewLinker* viewLinker = this->assosiatedViewLinker();
-        std::vector<RimGridView*> allLinkedViews;
-        viewLinker->allViews(allLinkedViews);
-        if (allLinkedViews.size() == 2)
-        {
-            RimGridView* depView = allLinkedViews[1];
-            viewer()->setComparisonViewEyePointOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+        viewer()->setComparisonViewEyePointOffsett(
+            RimViewManipulator::calculateEquivalentCamPosOffsett( this, depView ) );
 
-            depView->setOverrideViewer(viewer());
-            depView->setCurrentTimeStepAndUpdate(frameIndex);
-            depView->setOverrideViewer(nullptr);
-        }
+        depView->setOverrideViewer( viewer() );
+        depView->setCurrentTimeStepAndUpdate( frameIndex );
+        depView->setOverrideViewer( nullptr );
     }
 
     RimProject* project;
@@ -449,21 +459,15 @@ void Rim3dView::setCurrentTimeStep( int frameIndex )
 void Rim3dView::updateCurrentTimeStepAndRedraw()
 {
     this->updateCurrentTimeStep();
-    
-    if (isMasterView())
-    {
-        RimViewLinker* viewLinker = this->assosiatedViewLinker();
-        std::vector<RimGridView*> allLinkedViews;
-        viewLinker->allViews(allLinkedViews);
-        if (allLinkedViews.size() == 2)
-        {
-            RimGridView* depView = allLinkedViews[1];
-            viewer()->setComparisonViewEyePointOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
 
-            depView->setOverrideViewer(viewer());
-            depView->updateCurrentTimeStep();
-            depView->setOverrideViewer(nullptr);
-        }
+    if ( Rim3dView* depView = activeComparisonView() )
+    {
+        viewer()->setComparisonViewEyePointOffsett(
+            RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+
+        depView->setOverrideViewer(viewer());
+        depView->updateCurrentTimeStep();
+        depView->setOverrideViewer(nullptr);
     }
 
     RimProject* project;
@@ -493,24 +497,25 @@ void Rim3dView::createDisplayModelAndRedraw()
             m_cameraPointOfInterest = nativeOrOverrideViewer()->pointOfInterest();
         }
 
-        if (isMasterView())
+        if ( Rim3dView* depView = activeComparisonView() )
         {
-            RimViewLinker* viewLinker = this->assosiatedViewLinker();
-            std::vector<RimGridView*> allLinkedViews;
-            viewLinker->allViews(allLinkedViews);
-            if (allLinkedViews.size() == 2)
-            {
-                RimGridView* depView = allLinkedViews[1];
-                viewer()->setComparisonViewEyePointOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+            viewer()->setComparisonViewEyePointOffsett(
+                RimViewManipulator::calculateEquivalentCamPosOffsett( this, depView ) );
 
-                depView->setOverrideViewer(viewer());
-                depView->createDisplayModelAndRedraw();
-                if (isTimeStepDependentDataVisible())
-                {
-                    depView->setCurrentTimeStepAndUpdate(m_currentTimeStep);
-                }
-                depView->setOverrideViewer(nullptr);
+            depView->setOverrideViewer( viewer() );
+            depView->createDisplayModelAndRedraw();
+
+            if ( depView->isTimeStepDependentDataVisible() )
+            {
+                depView->setCurrentTimeStepAndUpdate( m_currentTimeStep );
             }
+
+            depView->setOverrideViewer( nullptr );
+        }
+        else if (viewer())
+        {
+            viewer()->setMainScene(nullptr, true);
+            viewer()->removeAllFrames(true);
         }
     }
 
@@ -761,6 +766,24 @@ void Rim3dView::fieldChangedByUi( const caf::PdmFieldHandle* changedField,
         m_viewer->showZScaleLabel( m_showZScaleLabel() );
         m_viewer->update();
     }
+    else if ( changedField == &m_isComparisonViewEnabled )
+    {
+        createDisplayModelAndRedraw();
+    }
+    else if ( changedField == &m_comparisonView )
+    {
+        if ( m_isComparisonViewEnabled() )
+        {
+            createDisplayModelAndRedraw();
+        }
+    }
+    else if ( changedField == &m_isComparisonViewLinkingTimestep )
+    {
+        if ( m_isComparisonViewEnabled() && m_comparisonView() )
+        {
+            createDisplayModelAndRedraw();
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -889,60 +912,28 @@ void Rim3dView::updateGridBoxData()
 
         BBox masterDomainBBox = showActiveCellsOnly() ? ownerCase()->activeCellsBoundingBox()
                                                       : ownerCase()->allCellsBoundingBox();
-
         BBox combinedDomainBBox = masterDomainBBox;
 
-        if ( isMasterView() )
+        if ( Rim3dView* depView = activeComparisonView() )
         {
-            RimViewLinker*            viewLinker = this->assosiatedViewLinker();
-            std::vector<RimGridView*> allLinkedViews;
-            viewLinker->allViews( allLinkedViews );
-            if ( allLinkedViews.size() == 2 )
+            viewer()->setComparisonViewEyePointOffsett(
+                RimViewManipulator::calculateEquivalentCamPosOffsett( this, depView ) );
+
+            RimCase* destinationOwnerCase = depView->ownerCase();
+
+            if ( destinationOwnerCase )
             {
-                RimGridView* depView              = allLinkedViews[1];
-                viewer()->setComparisonViewEyePointOffsett(RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
-
-                RimCase*     destinationOwnerCase = depView->ownerCase();
-
-                if ( destinationOwnerCase )
+                BBox depDomainBBox = depView->showActiveCellsOnly() ? destinationOwnerCase->activeCellsBoundingBox()
+                                                                    : destinationOwnerCase->allCellsBoundingBox();
+                if ( depDomainBBox.isValid() )
                 {
-                    cvf::Vec3d displOffset1 =  ownerCase()->displayModelOffset();
-                    cvf::Vec3d displOffset2 =  destinationOwnerCase->displayModelOffset();
-
-                    #if 0
-                    BBox masterDisplBBox( masterDomainBBox.min() - displOffset1,
-                                          masterDomainBBox.max() - displOffset1 );
-
-                    BBox depDomainBBox = depView->showActiveCellsOnly() ? destinationOwnerCase->activeCellsBoundingBox()
-                                                                        : destinationOwnerCase->allCellsBoundingBox();
-                    if ( depDomainBBox.isValid() )
-                    {
-                        BBox depDisplayBBox(depDomainBBox.min() - displOffset2,
-                                            depDomainBBox.max() - displOffset2);
-
-                        masterDisplBBox.add(depDisplayBBox);
-
-
-                        combinedDomainBBox = BBox(masterDisplBBox.min() + displOffset1,
-                                                  masterDisplBBox.max() + displOffset1);
-                    }
-                    #else
-                    BBox depDomainBBox = depView->showActiveCellsOnly() ? destinationOwnerCase->activeCellsBoundingBox()
-                                                                        : destinationOwnerCase->allCellsBoundingBox();
-                    if ( depDomainBBox.isValid() )
-                    {
-                        combinedDomainBBox.add(depDomainBBox.min());
-                        combinedDomainBBox.add(depDomainBBox.max());
-                    }
-                    #endif
+                    combinedDomainBBox.add( depDomainBBox.min() );
+                    combinedDomainBBox.add( depDomainBBox.max() );
                 }
             }
         }
 
-        viewer()->updateGridBoxData(scaleZ(),
-                                    ownerCase()->displayModelOffset(),
-                                    backgroundColor(),
-                                    combinedDomainBBox);
+        viewer()->updateGridBoxData( scaleZ(), ownerCase()->displayModelOffset(), backgroundColor(), combinedDomainBBox );
     }
 }
 
@@ -968,7 +959,6 @@ void Rim3dView::updateScaling()
 
     if ( viewer() )
     {
-
         cvf::Vec3d poi = nativeOrOverrideViewer()->pointOfInterest();
         cvf::Vec3d eye, dir, up;
         eye = nativeOrOverrideViewer()->mainCamera()->position();
@@ -1030,7 +1020,7 @@ void Rim3dView::createHighlightAndGridBoxDisplayModelWithRedraw()
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::createHighlightAndGridBoxDisplayModel()
 {
-    if (!nativeOrOverrideViewer()) return;
+    if ( !nativeOrOverrideViewer() ) return;
 
     nativeOrOverrideViewer()->removeStaticModel( m_highlightVizModel.p() );
 
@@ -1206,6 +1196,37 @@ bool Rim3dView::applyFontSize( RiaDefines::FontSettingType fontSettingType,
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+QList<caf::PdmOptionItemInfo> Rim3dView::calculateValueOptions( const caf::PdmFieldHandle* fieldNeedingOptions,
+                                                                bool*                      useOptionsOnly )
+{
+    QList<caf::PdmOptionItemInfo> options;
+
+    if ( fieldNeedingOptions == &m_comparisonView )
+    {
+        RimProject* proj;
+        this->firstAncestorOrThisOfType( proj );
+        if ( proj )
+        {
+            std::vector<Rim3dView*> views;
+            proj->allViews( views );
+            for ( auto view : views )
+            {
+                if (view != this) RiaOptionItemFactory::appendOptionItemFromViewNameAndCaseName( view, &options );
+            }
+
+            if ( !options.empty() )
+            {
+                options.push_front( caf::PdmOptionItemInfo( "None", nullptr ) );
+            }
+        }
+    }
+
+    return options;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 cvf::Mat4d Rim3dView::cameraPosition() const
 {
     return m_cameraPosition();
@@ -1323,5 +1344,20 @@ void Rim3dView::appendMeasurementToModel()
         addMeasurementToModel( model.p() );
 
         frameScene->addModel( model.p() );
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+Rim3dView* Rim3dView::activeComparisonView() const
+{
+    if ( m_isComparisonViewEnabled() )
+    {
+        return m_comparisonView();
+    }
+    else
+    {
+        return nullptr;
     }
 }

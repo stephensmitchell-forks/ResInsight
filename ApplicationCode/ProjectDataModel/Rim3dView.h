@@ -28,6 +28,7 @@
 #include "cafAppEnum.h"
 #include "cafPdmField.h"
 #include "cafPdmObject.h"
+#include "cafPdmPtrField.h"
 
 #include "cafPdmFieldCvfColor.h"
 #include "cafPdmFieldCvfMat4d.h"
@@ -177,6 +178,9 @@ public:
                         int                         fontSize,
                         bool                        forceChange = false ) override;
 
+    virtual QList<caf::PdmOptionItemInfo> calculateValueOptions( const caf::PdmFieldHandle* fieldNeedingOptions,
+                                                                 bool*                      useOptionsOnly ) override;
+
 protected:
     static void removeModelByName( cvf::Scene* scene, const cvf::String& modelName );
 
@@ -226,7 +230,6 @@ protected: // Fields
     caf::PdmField<int> m_currentTimeStep;
 
 protected:
-
     cvf::ref<cvf::ModelBasicList> m_wellPathPipeVizModel;
     cvf::ref<cvf::ModelBasicList> m_crossSectionVizModel;
     cvf::ref<cvf::ModelBasicList> m_highlightVizModel;
@@ -282,6 +285,8 @@ private:
     void appendAnnotationsToModel();
     void appendMeasurementToModel();
 
+    Rim3dView*  activeComparisonView() const;
+
 private:
     QPointer<RiuViewer> m_viewer;
     QPointer<RiuViewer> m_overrideViewer;
@@ -295,4 +300,7 @@ private:
     caf::PdmField<bool>                    m_showGridBox;
     caf::PdmField<bool>                    m_showZScaleLabel;
     caf::PdmField<int>                     m_viewId;
+    caf::PdmField<bool>                    m_isComparisonViewEnabled;
+    caf::PdmPtrField<Rim3dView*>           m_comparisonView;
+    caf::PdmField<bool>                    m_isComparisonViewLinkingTimestep;
 };
