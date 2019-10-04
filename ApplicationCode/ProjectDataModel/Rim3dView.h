@@ -108,7 +108,7 @@ public:
     RiuViewer* viewer() const;
     RiuViewer* nativeOrOverrideViewer() const;
     void       setOverrideViewer( RiuViewer* overrideViewer );
-    bool       isUsingOverrideViewer();
+    bool       isUsingOverrideViewer() const;
     void       setName( const QString& name );
     QString    name() const;
 
@@ -151,6 +151,7 @@ public:
     }
     void         setCurrentTimeStep( int frameIdx );
     void         setCurrentTimeStepAndUpdate( int frameIdx ) override;
+    bool         isTimeStepDependentDataVisibleInThisOrComparisonView() const;
     virtual bool isTimeStepDependentDataVisible() const = 0;
 
     // Updating

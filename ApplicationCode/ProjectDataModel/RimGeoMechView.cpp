@@ -246,18 +246,18 @@ void RimGeoMechView::createDisplayModel()
 
     nativeOrOverrideViewer()->removeAllFrames(isUsingOverrideViewer());
 
-    if ( isTimeStepDependentDataVisible() )
+    if ( isTimeStepDependentDataVisibleInThisOrComparisonView() )
     {
         // Create empty frames in the viewer
 
         int frameCount = geoMechCase()->geoMechData()->femPartResults()->frameCount();
         for ( int frameIndex = 0; frameIndex < frameCount; frameIndex++ )
         {
-            cvf::ref<cvf::Scene> scene = new cvf::Scene;
+            cvf::ref<cvf::Scene>          scene      = new cvf::Scene;
             cvf::ref<cvf::ModelBasicList> emptyModel = new cvf::ModelBasicList;
-            emptyModel->setName("EmptyModel");
+            emptyModel->setName( "EmptyModel" );
             scene->addModel( emptyModel.p() );
-            nativeOrOverrideViewer()->addFrame( scene.p(), isUsingOverrideViewer()  );
+            nativeOrOverrideViewer()->addFrame( scene.p(), isUsingOverrideViewer() );
         }
     }
 
@@ -291,7 +291,7 @@ void RimGeoMechView::createDisplayModel()
 
     // If the animation was active before recreating everything, make viewer view current frame
 
-    if ( isTimeStepDependentDataVisible() )
+    if ( isTimeStepDependentDataVisibleInThisOrComparisonView() )
     {
         if (viewer()) viewer()->setCurrentFrame( m_currentTimeStep );
     }
@@ -320,7 +320,7 @@ void RimGeoMechView::updateCurrentTimeStep()
 {
     updateLegends();
 
-    if ( this->isTimeStepDependentDataVisible() )
+    if ( this->isTimeStepDependentDataVisibleInThisOrComparisonView() )
     {
         if ( nativeOrOverrideViewer() )
         {

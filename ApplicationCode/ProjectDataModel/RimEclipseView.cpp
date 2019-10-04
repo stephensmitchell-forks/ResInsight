@@ -369,7 +369,7 @@ void RimEclipseView::createDisplayModel()
 
     // Find the number of time frames the animation needs to show the requested data.
 
-    if ( isTimeStepDependentDataVisible() && currentGridCellResults()->maxTimeStepCount() > 0 )
+    if ( ( isTimeStepDependentDataVisibleInThisOrComparisonView() && currentGridCellResults()->maxTimeStepCount() > 0 ) )
     {
         CVF_ASSERT( currentGridCellResults() );
 
