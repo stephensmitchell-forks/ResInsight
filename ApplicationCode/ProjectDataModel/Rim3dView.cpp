@@ -991,8 +991,6 @@ void Rim3dView::updateScaling()
 {
     if ( scaleZ < 1 ) scaleZ = 1;
 
-    this->updateGridBoxData();
-
     if ( viewer() )
     {
         cvf::Vec3d poi = nativeOrOverrideViewer()->pointOfInterest();
@@ -1004,13 +1002,13 @@ void Rim3dView::updateScaling()
         eye[2] = poi[2] * scaleZ() / this->scaleTransform()->worldTransform()( 2, 2 ) + ( eye[2] - poi[2] );
         poi[2] = poi[2] * scaleZ() / this->scaleTransform()->worldTransform()( 2, 2 );
 
-        nativeOrOverrideViewer()->mainCamera()->setFromLookAt( eye, eye + dir, up );
-        nativeOrOverrideViewer()->setPointOfInterest( poi );
+        viewer()->mainCamera()->setFromLookAt( eye, eye + dir, up );
+        viewer()->setPointOfInterest( poi );
 
         updateScaleTransform();
         createDisplayModelAndRedraw();
 
-        nativeOrOverrideViewer()->update();
+        viewer()->update();
 
         updateZScaleLabel();
     }
@@ -1074,6 +1072,8 @@ void Rim3dView::createHighlightAndGridBoxDisplayModel()
         m_highlightVizModel->updateBoundingBoxesRecursive();
         nativeOrOverrideViewer()->addStaticModelOnce( m_highlightVizModel.p(), isUsingOverrideViewer() );
     }
+
+    this->updateGridBoxData();
 
     if (viewer()) viewer()->showGridBox( m_showGridBox() );
 }
