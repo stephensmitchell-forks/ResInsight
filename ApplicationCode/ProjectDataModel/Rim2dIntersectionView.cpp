@@ -529,7 +529,7 @@ void Rim2dIntersectionView::createDisplayModel()
         }
     }
 
-    nativeOrOverrideViewer()->addStaticModelOnce( m_intersectionVizModel.p() );
+    nativeOrOverrideViewer()->addStaticModelOnce( m_intersectionVizModel.p(), isUsingOverrideViewer() );
 
     m_intersectionVizModel->updateBoundingBoxesRecursive();
 

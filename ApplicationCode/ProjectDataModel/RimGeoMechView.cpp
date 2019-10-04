@@ -254,7 +254,9 @@ void RimGeoMechView::createDisplayModel()
         for ( int frameIndex = 0; frameIndex < frameCount; frameIndex++ )
         {
             cvf::ref<cvf::Scene> scene = new cvf::Scene;
-            scene->addModel( new cvf::ModelBasicList );
+            cvf::ref<cvf::ModelBasicList> emptyModel = new cvf::ModelBasicList;
+            emptyModel->setName("EmptyModel");
+            scene->addModel( emptyModel.p() );
             nativeOrOverrideViewer()->addFrame( scene.p(), isUsingOverrideViewer()  );
         }
     }
@@ -262,7 +264,6 @@ void RimGeoMechView::createDisplayModel()
     // Set the Main scene in the viewer. Used when the animation is in "Stopped" state
 
     cvf::ref<cvf::Scene> mainScene = new cvf::Scene;
-    nativeOrOverrideViewer()->setMainScene( mainScene.p(), isUsingOverrideViewer() );
 
     // Grid model
     cvf::ref<cvf::ModelBasicList> mainSceneGridVizModel = new cvf::ModelBasicList;
@@ -271,6 +272,7 @@ void RimGeoMechView::createDisplayModel()
 
     mainSceneGridVizModel->updateBoundingBoxesRecursive();
     mainScene->addModel( mainSceneGridVizModel.p() );
+    nativeOrOverrideViewer()->setMainScene( mainScene.p(), isUsingOverrideViewer() );
 
     // Well path model
 
@@ -279,13 +281,13 @@ void RimGeoMechView::createDisplayModel()
     m_wellPathPipeVizModel->removeAllParts();
     addWellPathsToModel( m_wellPathPipeVizModel.p(), femBBox );
 
-    nativeOrOverrideViewer()->addStaticModelOnce( m_wellPathPipeVizModel.p() );
+    nativeOrOverrideViewer()->addStaticModelOnce( m_wellPathPipeVizModel.p(), isUsingOverrideViewer() );
 
     // Cross sections
 
     m_crossSectionVizModel->removeAllParts();
     m_crossSectionCollection->appendPartsToModel( *this, m_crossSectionVizModel.p(), scaleTransform() );
-    nativeOrOverrideViewer()->addStaticModelOnce( m_crossSectionVizModel.p() );
+    nativeOrOverrideViewer()->addStaticModelOnce( m_crossSectionVizModel.p(), isUsingOverrideViewer() );
 
     // If the animation was active before recreating everything, make viewer view current frame
 

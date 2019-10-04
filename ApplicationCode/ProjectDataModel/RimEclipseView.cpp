@@ -517,7 +517,7 @@ void RimEclipseView::createDisplayModel()
     m_crossSectionCollection->appendPartsToModel( *this,
                                                   m_crossSectionVizModel.p(),
                                                   m_reservoirGridPartManager->scaleTransform() );
-    nativeOrOverrideViewer()->addStaticModelOnce( m_crossSectionVizModel.p() );
+    nativeOrOverrideViewer()->addStaticModelOnce( m_crossSectionVizModel.p(), isUsingOverrideViewer() );
 
     // Well path model
 
@@ -532,7 +532,7 @@ void RimEclipseView::createDisplayModel()
     m_wellPathsPartManager->appendStaticFracturePartsToModel( m_wellPathPipeVizModel.p(),
                                                               currentActiveCellInfo()->geometryBoundingBox() );
     m_wellPathPipeVizModel->updateBoundingBoxesRecursive();
-    nativeOrOverrideViewer()->addStaticModelOnce( m_wellPathPipeVizModel.p() );
+    nativeOrOverrideViewer()->addStaticModelOnce( m_wellPathPipeVizModel.p(), isUsingOverrideViewer() );
 
     // Create Scenes from the frameModels
     // Animation frames for results display, starts from frame 1

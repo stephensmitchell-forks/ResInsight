@@ -90,8 +90,8 @@ public:
     cvf::Camera*            mainCamera();
     cvf::Camera*            comparisonMainCamera();
 
-    void                    setComparisonViewOffsett(const cvf::Vec3d& offset);
-    const cvf::Vec3d        comparisonViewOffsett() { return m_comparisonViewOffsett; }
+    void                    setComparisonViewEyePointOffsett(const cvf::Vec3d& offset);
+    const cvf::Vec3d        comparisonViewEyePointOffsett();
     void                    setComparisonViewScreenArea(int normalizedX, int normalizedY, uint normalizedWidth, uint normalizedHeight);
 
     // Set the main scene : the scene active when the animation is not active. (Stopped)

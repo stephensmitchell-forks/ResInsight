@@ -314,9 +314,17 @@ cvf::Camera* caf::Viewer::comparisonMainCamera()
 //--------------------------------------------------------------------------------------------------
 /// 
 //--------------------------------------------------------------------------------------------------
-void caf::Viewer::setComparisonViewOffsett(const cvf::Vec3d& offset)
+void caf::Viewer::setComparisonViewEyePointOffsett(const cvf::Vec3d& offset)
 {
     m_comparisonViewOffsett = offset;
+}
+
+//--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
+const cvf::Vec3d caf::Viewer::comparisonViewEyePointOffsett()
+{
+    return m_comparisonViewOffsett;
 }
 
 //--------------------------------------------------------------------------------------------------

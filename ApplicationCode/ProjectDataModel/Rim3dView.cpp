@@ -400,10 +400,11 @@ void Rim3dView::setCurrentTimeStepAndUpdate( int frameIndex )
         if (allLinkedViews.size() == 2)
         {
             RimGridView* depView = allLinkedViews[1];
+            viewer()->setComparisonViewEyePointOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+
             depView->setOverrideViewer(viewer());
-            depView->updateCurrentTimeStep();
+            depView->setCurrentTimeStepAndUpdate(frameIndex);
             depView->setOverrideViewer(nullptr);
-            viewer()->setComparisonViewOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
         }
     }
 
@@ -457,10 +458,11 @@ void Rim3dView::updateCurrentTimeStepAndRedraw()
         if (allLinkedViews.size() == 2)
         {
             RimGridView* depView = allLinkedViews[1];
+            viewer()->setComparisonViewEyePointOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+
             depView->setOverrideViewer(viewer());
             depView->updateCurrentTimeStep();
             depView->setOverrideViewer(nullptr);
-            viewer()->setComparisonViewOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
         }
     }
 
@@ -499,10 +501,15 @@ void Rim3dView::createDisplayModelAndRedraw()
             if (allLinkedViews.size() == 2)
             {
                 RimGridView* depView = allLinkedViews[1];
+                viewer()->setComparisonViewEyePointOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+
                 depView->setOverrideViewer(viewer());
                 depView->createDisplayModelAndRedraw();
+                if (isTimeStepDependentDataVisible())
+                {
+                    depView->setCurrentTimeStepAndUpdate(m_currentTimeStep);
+                }
                 depView->setOverrideViewer(nullptr);
-                viewer()->setComparisonViewOffsett(  RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
             }
         }
     }
@@ -876,13 +883,66 @@ bool Rim3dView::isMasterView() const
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::updateGridBoxData()
 {
-    if ( nativeOrOverrideViewer() && ownerCase() )
+    if ( viewer() && ownerCase() )
     {
-        nativeOrOverrideViewer()->updateGridBoxData( scaleZ(),
-                                                     ownerCase()->displayModelOffset(),
-                                                     backgroundColor(),
-                                                     showActiveCellsOnly() ? ownerCase()->activeCellsBoundingBox()
-                                                                           : ownerCase()->allCellsBoundingBox() );
+        using BBox = cvf::BoundingBox;
+
+        BBox masterDomainBBox = showActiveCellsOnly() ? ownerCase()->activeCellsBoundingBox()
+                                                      : ownerCase()->allCellsBoundingBox();
+
+        BBox combinedDomainBBox = masterDomainBBox;
+
+        if ( isMasterView() )
+        {
+            RimViewLinker*            viewLinker = this->assosiatedViewLinker();
+            std::vector<RimGridView*> allLinkedViews;
+            viewLinker->allViews( allLinkedViews );
+            if ( allLinkedViews.size() == 2 )
+            {
+                RimGridView* depView              = allLinkedViews[1];
+                viewer()->setComparisonViewEyePointOffsett(RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
+
+                RimCase*     destinationOwnerCase = depView->ownerCase();
+
+                if ( destinationOwnerCase )
+                {
+                    cvf::Vec3d displOffset1 =  ownerCase()->displayModelOffset();
+                    cvf::Vec3d displOffset2 =  destinationOwnerCase->displayModelOffset();
+
+                    #if 0
+                    BBox masterDisplBBox( masterDomainBBox.min() - displOffset1,
+                                          masterDomainBBox.max() - displOffset1 );
+
+                    BBox depDomainBBox = depView->showActiveCellsOnly() ? destinationOwnerCase->activeCellsBoundingBox()
+                                                                        : destinationOwnerCase->allCellsBoundingBox();
+                    if ( depDomainBBox.isValid() )
+                    {
+                        BBox depDisplayBBox(depDomainBBox.min() - displOffset2,
+                                            depDomainBBox.max() - displOffset2);
+
+                        masterDisplBBox.add(depDisplayBBox);
+
+
+                        combinedDomainBBox = BBox(masterDisplBBox.min() + displOffset1,
+                                                  masterDisplBBox.max() + displOffset1);
+                    }
+                    #else
+                    BBox depDomainBBox = depView->showActiveCellsOnly() ? destinationOwnerCase->activeCellsBoundingBox()
+                                                                        : destinationOwnerCase->allCellsBoundingBox();
+                    if ( depDomainBBox.isValid() )
+                    {
+                        combinedDomainBBox.add(depDomainBBox.min());
+                        combinedDomainBBox.add(depDomainBBox.max());
+                    }
+                    #endif
+                }
+            }
+        }
+
+        viewer()->updateGridBoxData(scaleZ(),
+                                    ownerCase()->displayModelOffset(),
+                                    backgroundColor(),
+                                    combinedDomainBBox);
     }
 }
 
@@ -906,8 +966,9 @@ void Rim3dView::updateScaling()
 
     this->updateGridBoxData();
 
-    if ( nativeOrOverrideViewer() )
+    if ( viewer() )
     {
+
         cvf::Vec3d poi = nativeOrOverrideViewer()->pointOfInterest();
         cvf::Vec3d eye, dir, up;
         eye = nativeOrOverrideViewer()->mainCamera()->position();
@@ -969,6 +1030,8 @@ void Rim3dView::createHighlightAndGridBoxDisplayModelWithRedraw()
 //--------------------------------------------------------------------------------------------------
 void Rim3dView::createHighlightAndGridBoxDisplayModel()
 {
+    if (!nativeOrOverrideViewer()) return;
+
     nativeOrOverrideViewer()->removeStaticModel( m_highlightVizModel.p() );
 
     m_highlightVizModel->removeAllParts();
@@ -983,7 +1046,7 @@ void Rim3dView::createHighlightAndGridBoxDisplayModel()
         }
 
         m_highlightVizModel->updateBoundingBoxesRecursive();
-        nativeOrOverrideViewer()->addStaticModelOnce( m_highlightVizModel.p() );
+        nativeOrOverrideViewer()->addStaticModelOnce( m_highlightVizModel.p(), isUsingOverrideViewer() );
     }
 
     nativeOrOverrideViewer()->showGridBox( m_showGridBox() );

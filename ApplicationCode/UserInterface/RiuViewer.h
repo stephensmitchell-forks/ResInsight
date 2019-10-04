@@ -186,6 +186,8 @@ private:
     RiuViewerCommands* m_viewerCommands;
 
     RivGridBoxGenerator*                   m_gridBoxGenerator;
+    RivGridBoxGenerator*                   m_comparisonGridBoxGenerator;
+
     cvf::ref<RivWindowEdgeAxesOverlayItem> m_windowEdgeAxisOverlay;
     bool                                   m_showWindowEdgeAxes;
 

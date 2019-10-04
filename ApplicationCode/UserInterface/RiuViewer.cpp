@@ -169,6 +169,7 @@ RiuViewer::RiuViewer( const QGLFormat& format, QWidget* parent )
     setContextMenuPolicy( Qt::PreventContextMenu );
 
     m_gridBoxGenerator = new RivGridBoxGenerator;
+    m_comparisonGridBoxGenerator = new RivGridBoxGenerator;
 
     m_cursorPositionDomainCoords = cvf::Vec3d::UNDEFINED;
     m_windowEdgeAxisOverlay      = new RivWindowEdgeAxesOverlayItem( standardFont );
@@ -195,6 +196,7 @@ RiuViewer::~RiuViewer()
     delete m_animationProgress;
     delete m_histogramWidget;
     delete m_gridBoxGenerator;
+    delete m_comparisonGridBoxGenerator;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -516,10 +518,12 @@ void RiuViewer::setHistogramPercentiles( double pmin, double pmax, double mean )
 void RiuViewer::showGridBox( bool enable )
 {
     this->removeStaticModel( m_gridBoxGenerator->model() );
+    this->removeStaticModel( m_comparisonGridBoxGenerator->model() );
 
     if ( enable )
     {
-        this->addStaticModelOnce( m_gridBoxGenerator->model() );
+        this->addStaticModelOnce( m_gridBoxGenerator->model(), false );
+        this->addStaticModelOnce( m_comparisonGridBoxGenerator->model(), true );
     }
 }
 
@@ -796,6 +800,7 @@ void RiuViewer::optimizeClippingPlanes()
     }
 
     m_gridBoxGenerator->updateFromCamera( mainCamera() );
+    m_comparisonGridBoxGenerator->updateFromCamera(comparisonMainCamera());
 
     m_scaleLegend->setDisplayCoordTransform( m_rimView->displayCoordTransform().p() );
     m_scaleLegend->updateFromCamera( mainCamera() );
@@ -891,6 +896,17 @@ void RiuViewer::updateGridBoxData( double                  scaleZ,
     m_gridBoxGenerator->setGridBoxDomainCoordBoundingBox( domainCoordBoundingBox );
 
     m_gridBoxGenerator->createGridBoxParts();
+
+    m_comparisonGridBoxGenerator->setScaleZ(scaleZ);
+    cvf::Vec3d unscaledComparisonOffset = comparisonViewEyePointOffsett();
+    
+    unscaledComparisonOffset.z() /= scaleZ;
+
+    m_comparisonGridBoxGenerator->setDisplayModelOffset( displayModelOffset - unscaledComparisonOffset);
+    m_comparisonGridBoxGenerator->updateFromBackgroundColor( backgroundColor );
+    m_comparisonGridBoxGenerator->setGridBoxDomainCoordBoundingBox( domainCoordBoundingBox );
+
+    m_comparisonGridBoxGenerator->createGridBoxParts();
 
     m_selectionVisualizerManager->updateVisibleEditors();
 }

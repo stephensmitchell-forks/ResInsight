@@ -147,7 +147,7 @@ cvf::Vec3d RimViewManipulator::calculateEquivalentCamPosOffsett(Rim3dView* sourc
     if ( destinationOwnerCase )
     {
         doffset = destinationOwnerCase->displayModelOffset();
-        doffset.z() *= destView->scaleZ();
+        doffset.z() *= sourceView->scaleZ();
     }
 
     return soffset - doffset;
