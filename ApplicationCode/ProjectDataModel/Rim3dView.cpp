@@ -413,6 +413,8 @@ void Rim3dView::setCurrentTimeStepAndUpdate( int frameIndex )
         int oldTimeStep = depView->currentTimeStep();
         depView->m_currentTimeStep = currentTimeStep();
         depView->clampCurrentTimestep();
+        double oldScaling = depView->scaleZ();
+        depView->scaleZ = scaleZ();
 
         viewer()->setComparisonViewEyePointOffsett(
             RimViewManipulator::calculateEquivalentCamPosOffsett( this, depView ) );
@@ -424,6 +426,7 @@ void Rim3dView::setCurrentTimeStepAndUpdate( int frameIndex )
 
         depView->setOverrideViewer( nullptr );
         depView->m_currentTimeStep = oldTimeStep;
+        depView->scaleZ = oldScaling;
     }
 
     RimProject* project;
@@ -487,6 +490,8 @@ void Rim3dView::updateCurrentTimeStepAndRedraw()
         int oldTimeStep = depView->currentTimeStep();
         depView->m_currentTimeStep = currentTimeStep();
         depView->clampCurrentTimestep();
+        double oldScaling = depView->scaleZ();
+        depView->scaleZ = scaleZ();
 
         viewer()->setComparisonViewEyePointOffsett(
             RimViewManipulator::calculateEquivalentCamPosOffsett(this, depView));
@@ -496,6 +501,7 @@ void Rim3dView::updateCurrentTimeStepAndRedraw()
         depView->setOverrideViewer(nullptr);
 
         depView->m_currentTimeStep = oldTimeStep;
+        depView->scaleZ = oldScaling;
     }
 
     RimProject* project;
@@ -514,6 +520,8 @@ void Rim3dView::createDisplayModelAndRedraw()
     {
         this->clampCurrentTimestep();
 
+        updateScaleTransform();
+
         createDisplayModel();
         createHighlightAndGridBoxDisplayModel();
         updateDisplayModelVisibility();
@@ -530,6 +538,8 @@ void Rim3dView::createDisplayModelAndRedraw()
             int oldTimeStep = depView->currentTimeStep();
             depView->m_currentTimeStep = currentTimeStep();
             depView->clampCurrentTimestep();
+            double oldScaling = depView->scaleZ();
+            depView->scaleZ = scaleZ();
 
             viewer()->setComparisonViewEyePointOffsett(
                 RimViewManipulator::calculateEquivalentCamPosOffsett( this, depView ) );
@@ -545,7 +555,7 @@ void Rim3dView::createDisplayModelAndRedraw()
 
             depView->setOverrideViewer( nullptr );
             depView->m_currentTimeStep = oldTimeStep;
-
+            depView->scaleZ = oldScaling;
         }
         else if (viewer())
         {
