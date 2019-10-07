@@ -165,6 +165,8 @@ caf::Viewer::Viewer(const QGLFormat& format, QWidget* parent)
 
     m_mainRendering = new cvf::Rendering("Main Rendering");
     m_comparisonMainRendering = new cvf::Rendering("Comparison Rendering");
+    m_overlayItemsRendering  = new cvf::Rendering("Overlay Rendering");
+    m_overlayItemsRendering->setClearMode(cvf::Viewport::DO_NOT_CLEAR);
 
     m_comparisonRenderingScissor = new cvf::RenderingScissor;
     m_comparisonMainRendering->setRenderingScissor(m_comparisonRenderingScissor.p());
@@ -208,9 +210,11 @@ void caf::Viewer::setupMainRendering()
 {
     m_mainRendering->setCamera(m_mainCamera.p());
     m_comparisonMainRendering->setCamera(m_comparisonMainCamera.p());
+    m_overlayItemsRendering->setCamera(m_mainCamera.p());
 
     m_mainRendering->setRenderQueueSorter(new cvf::RenderQueueSorterBasic(cvf::RenderQueueSorterBasic::EFFECT_ONLY));
     m_comparisonMainRendering->setRenderQueueSorter(new cvf::RenderQueueSorterBasic(cvf::RenderQueueSorterBasic::EFFECT_ONLY));
+    m_overlayItemsRendering->setRenderQueueSorter(new cvf::RenderQueueSorterBasic(cvf::RenderQueueSorterBasic::EFFECT_ONLY));
 
     m_mainRendering->addGlobalDynamicUniformSet(m_globalUniformSet.p());
     m_comparisonMainRendering->addGlobalDynamicUniformSet(m_globalUniformSet.p());
@@ -220,14 +224,17 @@ void caf::Viewer::setupMainRendering()
     {
         m_mainRendering->renderEngine()->enableForcedImmediateMode(true);
         m_comparisonMainRendering->renderEngine()->enableForcedImmediateMode(true);
+        m_overlayItemsRendering->renderEngine()->enableForcedImmediateMode(true);
     }
 
     if (contextGroup()->capabilities() &&
         contextGroup()->capabilities()->hasCapability(cvf::OpenGLCapabilities::FRAMEBUFFER_OBJECT))
     {
         m_offscreenFbo = new cvf::FramebufferObject;
+
         m_mainRendering->setTargetFramebuffer(m_offscreenFbo.p());
         m_comparisonMainRendering->setTargetFramebuffer(m_offscreenFbo.p());
+        m_overlayItemsRendering->setTargetFramebuffer(m_offscreenFbo.p());
 
         cvf::ref<cvf::RenderbufferObject> rbo = new cvf::RenderbufferObject(cvf::RenderbufferObject::DEPTH_COMPONENT24, 1, 1);
         m_offscreenFbo->attachDepthRenderbuffer(rbo.p());
@@ -247,6 +254,7 @@ void caf::Viewer::setupRenderingSequence()
 {
     m_renderingSequence->addRendering(m_mainRendering.p());
     m_renderingSequence->addRendering(m_comparisonMainRendering.p());
+    m_renderingSequence->addRendering(m_overlayItemsRendering.p());
 
     if (m_offscreenFbo.notNull())
     {
@@ -780,12 +788,12 @@ void caf::Viewer::paintEvent(QPaintEvent* event)
     m_renderingSequence->removeRendering(m_comparisonMainRendering.p());
     if ( m_comparisonMainRendering->scene() )
     {
-        m_renderingSequence->insertRendering( m_quadRendering.p(), m_comparisonMainRendering.p());
+        m_renderingSequence->insertRendering( m_overlayItemsRendering.p(), m_comparisonMainRendering.p());
     }
 
     if ( m_poiVisualizationManager.notNull() )
     {
-        m_poiVisualizationManager->update(m_navigationPolicy->pointOfInterest());
+        m_poiVisualizationManager->update(m_navigationPolicy->pointOfInterest()); // Todo: Must be inserted in comparison scene as well, using the display offset
         m_mainRendering->scene()->addModel(m_poiVisualizationManager->model());
     }
 
@@ -1210,15 +1218,23 @@ void caf::Viewer::enableOverlayPainting(bool val)
 //--------------------------------------------------------------------------------------------------
 /// 
 //--------------------------------------------------------------------------------------------------
+cvf::Rendering* caf::Viewer::overlayItemsRendering()
+{
+    return m_overlayItemsRendering.p();
+}
+
+//--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
 void caf::Viewer::updateOverlayImagePresence()
 {
     if (m_isOverlayPaintingEnabled || m_showPerfInfoHud)
     {
-         m_mainRendering->addOverlayItem(m_overlayImage.p());
+         m_overlayItemsRendering->addOverlayItem(m_overlayImage.p());
     }
     else
     {
-         m_mainRendering->removeOverlayItem(m_overlayImage.p());
+        m_overlayItemsRendering->removeOverlayItem(m_overlayImage.p());
     }
 }
 
@@ -1380,12 +1396,12 @@ void caf::Viewer::appendAllStaticModelsToFrame(cvf::Scene* scene, bool isForComp
 //--------------------------------------------------------------------------------------------------
 cvf::OverlayItem* caf::Viewer::overlayItem(int winPosX, int winPosY)
 {
-    if (m_mainRendering.isNull()) return nullptr;
+    if (m_overlayItemsRendering.isNull()) return nullptr;
 
     int translatedMousePosX = winPosX;
     int translatedMousePosY = height() - winPosY;
 
-    return m_mainRendering->overlayItemFromWindowCoordinates(translatedMousePosX, translatedMousePosY);
+    return m_overlayItemsRendering->overlayItemFromWindowCoordinates(translatedMousePosX, translatedMousePosY);
 }
 
 

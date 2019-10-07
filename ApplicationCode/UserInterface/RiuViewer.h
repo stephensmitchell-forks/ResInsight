@@ -107,6 +107,7 @@ public:
 
     void removeAllColorLegends();
     void addColorLegendToBottomLeftCorner( caf::TitledOverlayFrame* legend );
+    void removeColorLegend( caf::TitledOverlayFrame* legend);
 
     void enableNavigationRotation( bool disable );
     void updateNavigationPolicy();

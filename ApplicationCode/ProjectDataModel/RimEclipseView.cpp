@@ -1163,7 +1163,20 @@ void RimEclipseView::updateLegends()
 {
     if ( nativeOrOverrideViewer() )
     {
-        nativeOrOverrideViewer()->removeAllColorLegends();
+        if ( !isUsingOverrideViewer() )
+        {
+            nativeOrOverrideViewer()->removeAllColorLegends();
+        }
+        else
+        {
+            nativeOrOverrideViewer()->removeColorLegend( this->cellEdgeResult()->legendConfig()->titledOverlayFrame() );
+            nativeOrOverrideViewer()->removeColorLegend( fractureColors()->activeLegend()->titledOverlayFrame() );
+            nativeOrOverrideViewer()->removeColorLegend( m_virtualPerforationResult->legendConfig()->titledOverlayFrame() );
+            nativeOrOverrideViewer()->removeColorLegend( this->cellResult()->legendConfig()->titledOverlayFrame() );
+            nativeOrOverrideViewer()->removeColorLegend( this->cellResult()->ternaryLegendConfig()->titledOverlayFrame() );
+            nativeOrOverrideViewer()->removeColorLegend( this->currentFaultResultColors()->legendConfig()->titledOverlayFrame() );
+            nativeOrOverrideViewer()->removeColorLegend( this->currentFaultResultColors()->ternaryLegendConfig()->titledOverlayFrame() );
+        }
     }
 
     if ( !m_eclipseCase || !nativeOrOverrideViewer() || !m_eclipseCase->eclipseCaseData() )

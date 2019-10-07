@@ -152,6 +152,7 @@ public:
 
     bool                    isOverlayPaintingEnabled() const;
     void                    enableOverlayPainting(bool val);
+    cvf::Rendering*         overlayItemsRendering();
 
     // Performance information for debugging etc.
     void                    enablePerfInfoHud(bool enable);
@@ -273,6 +274,9 @@ private:
     int                                 m_offscreenViewportWidth;
     int                                 m_offscreenViewportHeight;
     cvf::ref<cvf::Rendering>            m_quadRendering;
+
+    cvf::ref<cvf::Rendering>            m_overlayItemsRendering;
+
 };
 
 } // End namespace caf

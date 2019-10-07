@@ -101,7 +101,7 @@ RiuViewer::RiuViewer( const QGLFormat& format, QWidget* parent )
     m_axisCross = new cvf::OverlayAxisCross( m_mainCamera.p(), standardFont );
     m_axisCross->setAxisLabels( "X", "Y", "Z" );
     m_axisCross->setLayout( cvf::OverlayItem::VERTICAL, cvf::OverlayItem::BOTTOM_RIGHT );
-    m_mainRendering->addOverlayItem( m_axisCross.p() );
+    overlayItemsRendering()->addOverlayItem( m_axisCross.p() );
     m_showAxisCross = true;
 
     this->enableOverlayPainting( true );
@@ -348,6 +348,8 @@ void RiuViewer::setEnableMask( unsigned int mask )
 //--------------------------------------------------------------------------------------------------
 void RiuViewer::paintOverlayItems( QPainter* painter )
 {
+    updateLegendLayout();
+
     int columnWidth = 200;
 
     int edgeAxisFrameBorderWidth  = m_showWindowEdgeAxes ? m_windowEdgeAxisOverlay->frameBorderWidth() : 0;
@@ -558,7 +560,7 @@ void RiuViewer::removeAllColorLegends()
 {
     for ( size_t i = 0; i < m_visibleLegends.size(); i++ )
     {
-        m_mainRendering->removeOverlayItem( m_visibleLegends[i].p() );
+        overlayItemsRendering()->removeOverlayItem( m_visibleLegends[i].p() );
     }
 
     m_visibleLegends.clear();
@@ -572,9 +574,9 @@ void RiuViewer::addColorLegendToBottomLeftCorner( caf::TitledOverlayFrame* added
     RiaGuiApplication* app = RiaGuiApplication::instance();
     CVF_ASSERT( app );
     RiaPreferences* preferences    = app->preferences();
-    cvf::Rendering* firstRendering = m_mainRendering.p();
+    cvf::Rendering* overlayRendering = overlayItemsRendering();
     CVF_ASSERT( preferences );
-    CVF_ASSERT( firstRendering );
+    CVF_ASSERT( overlayRendering );
 
     if ( addedLegend )
     {
@@ -583,17 +585,28 @@ void RiuViewer::addColorLegendToBottomLeftCorner( caf::TitledOverlayFrame* added
         cvf::Color3f frameColor( backgroundColor.r(), backgroundColor.g(), backgroundColor.b() );
         updateLegendTextAndTickMarkColor( addedLegend );
 
-        firstRendering->addOverlayItem( addedLegend );
+        overlayRendering->addOverlayItem( addedLegend );
         addedLegend->enableBackground( preferences->showLegendBackground() );
         addedLegend->setBackgroundColor( backgroundColor );
         addedLegend->setBackgroundFrameColor(
             cvf::Color4f( RiaColorTools::computeOffsetColor( frameColor, 0.3f ), 0.9f ) );
         addedLegend->setFont( app->defaultSceneFont() );
 
-        m_visibleLegends.push_back( addedLegend );
+        if ( !m_visibleLegends.contains(addedLegend) )
+        {
+            m_visibleLegends.push_back(addedLegend);
+        }
     }
 
-    updateLegendLayout();
+}
+
+//--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
+void RiuViewer::removeColorLegend(caf::TitledOverlayFrame* legend)
+{
+    overlayItemsRendering()->removeOverlayItem( legend );
+    m_visibleLegends.erase(legend);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -763,11 +776,11 @@ void RiuViewer::setCurrentFrame( int frameIndex )
 //--------------------------------------------------------------------------------------------------
 void RiuViewer::showAxisCross( bool enable )
 {
-    m_mainRendering->removeOverlayItem( m_axisCross.p() );
+    overlayItemsRendering()->removeOverlayItem( m_axisCross.p() );
 
     if ( enable )
     {
-        m_mainRendering->addOverlayItem( m_axisCross.p() );
+        overlayItemsRendering()->addOverlayItem( m_axisCross.p() );
     }
     m_showAxisCross = enable;
 }
@@ -814,7 +827,6 @@ void RiuViewer::optimizeClippingPlanes()
 void RiuViewer::resizeGL( int width, int height )
 {
     caf::Viewer::resizeGL( width, height );
-    this->updateLegendLayout();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -916,19 +928,18 @@ void RiuViewer::updateGridBoxData( double                  scaleZ,
 //--------------------------------------------------------------------------------------------------
 void RiuViewer::showEdgeTickMarksXY( bool enable, bool showAxisLines )
 {
-    m_mainRendering->removeOverlayItem( m_windowEdgeAxisOverlay.p() );
+    overlayItemsRendering()->removeOverlayItem( m_windowEdgeAxisOverlay.p() );
 
     if ( enable )
     {
         m_windowEdgeAxisOverlay->setDomainAxes( RivWindowEdgeAxesOverlayItem::XY_AXES );
         m_windowEdgeAxisOverlay->setIsSwitchingYAxisSign( false );
         m_windowEdgeAxisOverlay->setShowAxisLines( showAxisLines );
-        m_mainRendering->addOverlayItem( m_windowEdgeAxisOverlay.p() );
+        overlayItemsRendering()->addOverlayItem( m_windowEdgeAxisOverlay.p() );
     }
 
     m_showWindowEdgeAxes = enable;
 
-    updateLegendLayout();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -936,19 +947,18 @@ void RiuViewer::showEdgeTickMarksXY( bool enable, bool showAxisLines )
 //--------------------------------------------------------------------------------------------------
 void RiuViewer::showEdgeTickMarksXZ( bool enable, bool showAxisLines )
 {
-    m_mainRendering->removeOverlayItem( m_windowEdgeAxisOverlay.p() );
+    overlayItemsRendering()->removeOverlayItem( m_windowEdgeAxisOverlay.p() );
 
     if ( enable )
     {
         m_windowEdgeAxisOverlay->setDomainAxes( RivWindowEdgeAxesOverlayItem::XZ_AXES );
         m_windowEdgeAxisOverlay->setIsSwitchingYAxisSign( true );
         m_windowEdgeAxisOverlay->setShowAxisLines( showAxisLines );
-        m_mainRendering->addOverlayItem( m_windowEdgeAxisOverlay.p() );
+        overlayItemsRendering()->addOverlayItem( m_windowEdgeAxisOverlay.p() );
     }
 
     m_showWindowEdgeAxes = enable;
 
-    updateLegendLayout();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1059,14 +1069,13 @@ void RiuViewer::showScaleLegend( bool show )
         else
             m_scaleLegend->setRenderSize( {50, 280} );
 
-        m_mainRendering->addOverlayItem( m_scaleLegend.p() );
+        overlayItemsRendering()->addOverlayItem( m_scaleLegend.p() );
     }
     else
     {
-        m_mainRendering->removeOverlayItem( m_scaleLegend.p() );
+        overlayItemsRendering()->removeOverlayItem( m_scaleLegend.p() );
     }
 
-    updateLegendLayout();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1091,12 +1100,12 @@ void RiuViewer::clearHoverCursor()
 void RiuViewer::updateFonts()
 {
     cvf::Font* standardFont = RiaGuiApplication::instance()->defaultSceneFont();
-    m_mainRendering->removeOverlayItem( m_axisCross.p() );
+    overlayItemsRendering()->removeOverlayItem( m_axisCross.p() );
 
     m_axisCross = new cvf::OverlayAxisCross( m_mainCamera.p(), standardFont );
     m_axisCross->setAxisLabels( "X", "Y", "Z" );
     m_axisCross->setLayout( cvf::OverlayItem::VERTICAL, cvf::OverlayItem::BOTTOM_RIGHT );
-    m_mainRendering->addOverlayItem( m_axisCross.p() );
+    overlayItemsRendering()->addOverlayItem( m_axisCross.p() );
     m_showAxisCross = true;
 
     QFont font = QApplication::font();

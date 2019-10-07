@@ -434,7 +434,15 @@ void RimGeoMechView::updateLegends()
 {
     if ( nativeOrOverrideViewer() )
     {
-        nativeOrOverrideViewer()->removeAllColorLegends();
+        if ( !isUsingOverrideViewer() )
+        {
+            nativeOrOverrideViewer()->removeAllColorLegends();
+        }
+        else
+        {
+            nativeOrOverrideViewer()->removeColorLegend(cellResult()->legendConfig->titledOverlayFrame());
+            nativeOrOverrideViewer()->removeColorLegend(m_tensorResults->arrowColorLegendConfig->titledOverlayFrame());
+        }
 
         this->updateLegendTextAndRanges( cellResult()->legendConfig(), m_currentTimeStep() );
 

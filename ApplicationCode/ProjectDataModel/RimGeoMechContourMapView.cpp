@@ -368,7 +368,14 @@ void RimGeoMechContourMapView::updateLegends()
 {
     if ( nativeOrOverrideViewer() )
     {
-        nativeOrOverrideViewer()->removeAllColorLegends();
+        if ( !isUsingOverrideViewer() )
+        {
+            nativeOrOverrideViewer()->removeAllColorLegends();
+        }
+        else if (m_contourMapProjection && m_contourMapProjection->legendConfig())
+        {
+            nativeOrOverrideViewer()->removeColorLegend(m_contourMapProjection->legendConfig()->titledOverlayFrame());
+        }
 
         if ( m_contourMapProjection && m_contourMapProjection->isChecked() )
         {
