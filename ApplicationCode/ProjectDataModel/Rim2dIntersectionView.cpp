@@ -475,18 +475,18 @@ void Rim2dIntersectionView::axisLabels( cvf::String* xLabel, cvf::String* yLabel
 //--------------------------------------------------------------------------------------------------
 void Rim2dIntersectionView::createDisplayModel()
 {
-    if (! nativeOrOverrideViewer() ) return;
+    if ( !nativeOrOverrideViewer() ) return;
     if ( !m_intersection() ) return;
 
     updateScaleTransform();
 
-    nativeOrOverrideViewer()->removeAllFrames(isUsingOverrideViewer());
+    nativeOrOverrideViewer()->removeAllFrames( isUsingOverrideViewer() );
 
     int tsCount = this->timeStepCount();
 
     for ( int i = 0; i < tsCount; ++i )
     {
-        nativeOrOverrideViewer()->addFrame( new cvf::Scene(), isUsingOverrideViewer()  );
+        nativeOrOverrideViewer()->addFrame( new cvf::Scene(), isUsingOverrideViewer() );
     }
 
     m_flatIntersectionPartMgr = new RivIntersectionPartMgr( m_intersection(), true );
@@ -535,7 +535,7 @@ void Rim2dIntersectionView::createDisplayModel()
 
     if ( this->hasUserRequestedAnimation() )
     {
-        if (viewer()) viewer()->setCurrentFrame( m_currentTimeStep );
+        if ( viewer() ) viewer()->setCurrentFrame( m_currentTimeStep );
         updateCurrentTimeStep();
     }
 
@@ -694,7 +694,7 @@ void Rim2dIntersectionView::resetLegendsInViewer()
     nativeOrOverrideViewer()->showVersionInfo( false );
     nativeOrOverrideViewer()->showEdgeTickMarksXZ( true, m_showAxisLines() );
 
-    nativeOrOverrideViewer()->setMainScene( new cvf::Scene(), isUsingOverrideViewer()  );
+    nativeOrOverrideViewer()->setMainScene( new cvf::Scene(), isUsingOverrideViewer() );
     nativeOrOverrideViewer()->enableNavigationRotation( false );
 
     m_ternaryLegendConfig()->recreateLegend();

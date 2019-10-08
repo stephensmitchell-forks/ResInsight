@@ -322,7 +322,7 @@ void RimEclipseContourMapView::appendContourLinesToModel()
 {
     if ( nativeOrOverrideViewer() && m_contourMapProjection->isChecked() )
     {
-        cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer()  );
+        cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer() );
         if ( frameScene )
         {
             cvf::String name = "ContourMapLines";
@@ -349,7 +349,7 @@ void RimEclipseContourMapView::appendPickPointVisToModel()
 {
     if ( nativeOrOverrideViewer() && m_contourMapProjection->isChecked() )
     {
-        cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer()  );
+        cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer() );
         if ( frameScene )
         {
             cvf::String name = "ContourMapPickPoint";
@@ -379,9 +379,9 @@ void RimEclipseContourMapView::updateLegends()
         {
             nativeOrOverrideViewer()->removeAllColorLegends();
         }
-        else if (m_contourMapProjection && m_contourMapProjection->legendConfig())
+        else if ( m_contourMapProjection && m_contourMapProjection->legendConfig() )
         {
-            nativeOrOverrideViewer()->removeColorLegend(m_contourMapProjection->legendConfig()->titledOverlayFrame());
+            nativeOrOverrideViewer()->removeColorLegend( m_contourMapProjection->legendConfig()->titledOverlayFrame() );
         }
 
         if ( m_contourMapProjection && m_contourMapProjection->isChecked() )

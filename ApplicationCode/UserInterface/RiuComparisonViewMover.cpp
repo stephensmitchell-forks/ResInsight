@@ -20,22 +20,23 @@
 #include "cafViewer.h"
 
 //--------------------------------------------------------------------------------------------------
-/// 
+///
 //--------------------------------------------------------------------------------------------------
-RiuComparisonViewMover::RiuComparisonViewMover(caf::Viewer* viewer): QObject(viewer)
-, m_viewer(viewer)
-, m_dragState(NONE)
-, m_highlightHandle(NONE)
+RiuComparisonViewMover::RiuComparisonViewMover( caf::Viewer* viewer )
+    : QObject( viewer )
+    , m_viewer( viewer )
+    , m_dragState( NONE )
+    , m_highlightHandle( NONE )
 {
-    viewer->installEventFilter(this);
+    viewer->installEventFilter( this );
 }
 
 //--------------------------------------------------------------------------------------------------
-/// 
+///
 //--------------------------------------------------------------------------------------------------
-bool RiuComparisonViewMover::eventFilter(QObject* watched, QEvent* event)
+bool RiuComparisonViewMover::eventFilter( QObject* watched, QEvent* event )
 {
-    if ( !m_viewer->currentScene(true) ) return false;
+    if ( !m_viewer->currentScene( true ) ) return false;
 
     switch ( event->type() )
     {
@@ -43,11 +44,11 @@ bool RiuComparisonViewMover::eventFilter(QObject* watched, QEvent* event)
         case QEvent::MouseButtonRelease:
         case QEvent::MouseMove:
         {
-            QMouseEvent* mEv = static_cast<QMouseEvent*>(event);
+            QMouseEvent* mEv = static_cast<QMouseEvent*>( event );
 
             if ( mEv->type() == QEvent::MouseButtonPress && mEv->button() == Qt::LeftButton )
             {
-                DragState handle = findHandleUnderMouse(mEv->pos());
+                DragState handle = findHandleUnderMouse( mEv->pos() );
                 m_dragState      = handle;
             }
             else if ( mEv->type() == QEvent::MouseButtonRelease && mEv->button() == Qt::LeftButton )
@@ -56,20 +57,19 @@ bool RiuComparisonViewMover::eventFilter(QObject* watched, QEvent* event)
             }
             else if ( mEv->type() == QEvent::MouseMove )
             {
-
-                m_highlightHandle = findHandleUnderMouse(mEv->pos());
+                m_highlightHandle = findHandleUnderMouse( mEv->pos() );
 
                 if ( m_dragState == LEFT_EDGE )
                 {
                     QPointF    mousePos     = mEv->windowPos();
-                    QPointF    normMousePos ={ mousePos.x() / m_viewer->width(), mousePos.y() / m_viewer->height() };
+                    QPointF    normMousePos = {mousePos.x() / m_viewer->width(), mousePos.y() / m_viewer->height()};
                     cvf::Rectf normalizedComparisonRect = m_viewer->comparisonScreenArea();
-                    m_viewer->setComparisonViewScreenArea(normMousePos.x(),
-                                                          normalizedComparisonRect.min().y(),
-                                                          (normalizedComparisonRect.min().x() +
-                                                           normalizedComparisonRect.width()) -
-                                                          normMousePos.x(),
-                                                          normalizedComparisonRect.height());
+                    m_viewer->setComparisonViewScreenArea( normMousePos.x(),
+                                                           normalizedComparisonRect.min().y(),
+                                                           ( normalizedComparisonRect.min().x() +
+                                                             normalizedComparisonRect.width() ) -
+                                                               normMousePos.x(),
+                                                           normalizedComparisonRect.height() );
                     return true;
                 }
                 else
@@ -84,11 +84,11 @@ bool RiuComparisonViewMover::eventFilter(QObject* watched, QEvent* event)
 }
 
 //--------------------------------------------------------------------------------------------------
-/// 
+///
 //--------------------------------------------------------------------------------------------------
-void RiuComparisonViewMover::paintMoverHandles(QPainter* painter)
+void RiuComparisonViewMover::paintMoverHandles( QPainter* painter )
 {
-    if ( !m_viewer->currentScene(true) ) return;
+    if ( !m_viewer->currentScene( true ) ) return;
 
     const int  handleThickness          = 7;
     cvf::Rectf normalizedComparisonRect = m_viewer->comparisonScreenArea();
@@ -102,21 +102,21 @@ void RiuComparisonViewMover::paintMoverHandles(QPainter* painter)
     int topEdgePosQt    = height - topEdgePosOgl;
     int bottomEdgePosQt = height - viewerHeight * normalizedComparisonRect.min().y();
 
-    painter->setPen(QColor(0, 0, 0, 30));
+    painter->setPen( QColor( 0, 0, 0, 30 ) );
 
-    painter->drawRect(leftEdgePos, topEdgePosQt, width - 1, height - 1);
+    painter->drawRect( leftEdgePos, topEdgePosQt, width - 1, height - 1 );
 
-    QColor handleColor(0, 0, 0, 50);
+    QColor handleColor( 0, 0, 0, 50 );
     if ( m_highlightHandle == LEFT_EDGE || m_dragState == LEFT_EDGE )
     {
-        handleColor = QColor(255, 255, 255, 50);
+        handleColor = QColor( 255, 255, 255, 50 );
     }
 
-    painter->fillRect(leftEdgePos - handleThickness * 0.4,
-                      bottomEdgePosQt - 8 * handleThickness,
-                      handleThickness,
-                      handleThickness * 6,
-                      handleColor);
+    painter->fillRect( leftEdgePos - handleThickness * 0.4,
+                       bottomEdgePosQt - 8 * handleThickness,
+                       handleThickness,
+                       handleThickness * 6,
+                       handleColor );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -133,8 +133,10 @@ RiuComparisonViewMover::DragState RiuComparisonViewMover::findHandleUnderMouse( 
     int height          = viewerHeight * normalizedComparisonRect.height();
     int bottomEdgePosQt = height - viewerHeight * normalizedComparisonRect.min().y();
 
-    if ( ( leftEdgePos - handleThickness * 0.4 ) < mousePos.x() && mousePos.x() < ( leftEdgePos + handleThickness * 0.5 ) &&
-         ( bottomEdgePosQt - 8 * handleThickness ) < mousePos.y() && mousePos.y() < ( bottomEdgePosQt - 2 * handleThickness ) )
+    if ( ( leftEdgePos - handleThickness * 0.4 ) < mousePos.x() &&
+         mousePos.x() < ( leftEdgePos + handleThickness * 0.5 ) &&
+         ( bottomEdgePosQt - 8 * handleThickness ) < mousePos.y() &&
+         mousePos.y() < ( bottomEdgePosQt - 2 * handleThickness ) )
     {
         return LEFT_EDGE;
     }

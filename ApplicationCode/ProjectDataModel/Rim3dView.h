@@ -286,7 +286,7 @@ private:
     void appendAnnotationsToModel();
     void appendMeasurementToModel();
 
-    Rim3dView*  activeComparisonView() const;
+    Rim3dView* activeComparisonView() const;
 
 private:
     QPointer<RiuViewer> m_viewer;

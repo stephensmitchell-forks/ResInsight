@@ -675,7 +675,7 @@ void RimProject::allViews( std::vector<Rim3dView*>& views ) const
         std::vector<Rim3dView*> caseViews = rimCase->views();
         for ( size_t viewIdx = 0; viewIdx < caseViews.size(); viewIdx++ )
         {
-            if ( caseViews[viewIdx]  )
+            if ( caseViews[viewIdx] )
             {
                 views.push_back( caseViews[viewIdx] );
             }

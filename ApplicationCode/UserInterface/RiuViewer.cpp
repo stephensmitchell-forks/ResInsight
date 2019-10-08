@@ -37,11 +37,11 @@
 #include "WindowEdgeAxesOverlayItem/RivWindowEdgeAxesOverlayItem.h"
 
 #include "RiuCadNavigation.h"
+#include "RiuComparisonViewMover.h"
 #include "RiuGeoQuestNavigation.h"
 #include "RiuRmsNavigation.h"
 #include "RiuSimpleHistogramWidget.h"
 #include "RiuViewerCommands.h"
-#include "RiuComparisonViewMover.h"
 
 #include "cafPdmUiSelection3dEditorVisualizer.h"
 
@@ -169,7 +169,7 @@ RiuViewer::RiuViewer( const QGLFormat& format, QWidget* parent )
     // which solves the problem
     setContextMenuPolicy( Qt::PreventContextMenu );
 
-    m_gridBoxGenerator = new RivGridBoxGenerator;
+    m_gridBoxGenerator           = new RivGridBoxGenerator;
     m_comparisonGridBoxGenerator = new RivGridBoxGenerator;
 
     m_cursorPositionDomainCoords = cvf::Vec3d::UNDEFINED;
@@ -181,7 +181,7 @@ RiuViewer::RiuViewer( const QGLFormat& format, QWidget* parent )
     m_scaleLegend = new caf::OverlayScaleLegend( standardFont );
     m_scaleLegend->setOrientation( caf::OverlayScaleLegend::HORIZONTAL );
 
-    m_comparisonWindowMover = new RiuComparisonViewMover(this);
+    m_comparisonWindowMover = new RiuComparisonViewMover( this );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -451,7 +451,7 @@ void RiuViewer::paintOverlayItems( QPainter* painter )
         }
     }
 
-    m_comparisonWindowMover->paintMoverHandles(painter);
+    m_comparisonWindowMover->paintMoverHandles( painter );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -578,7 +578,7 @@ void RiuViewer::addColorLegendToBottomLeftCorner( caf::TitledOverlayFrame* added
 {
     RiaGuiApplication* app = RiaGuiApplication::instance();
     CVF_ASSERT( app );
-    RiaPreferences* preferences    = app->preferences();
+    RiaPreferences* preferences      = app->preferences();
     cvf::Rendering* overlayRendering = overlayItemsRendering();
     CVF_ASSERT( preferences );
     CVF_ASSERT( overlayRendering );
@@ -597,21 +597,20 @@ void RiuViewer::addColorLegendToBottomLeftCorner( caf::TitledOverlayFrame* added
             cvf::Color4f( RiaColorTools::computeOffsetColor( frameColor, 0.3f ), 0.9f ) );
         addedLegend->setFont( app->defaultSceneFont() );
 
-        if ( !m_visibleLegends.contains(addedLegend) )
+        if ( !m_visibleLegends.contains( addedLegend ) )
         {
-            m_visibleLegends.push_back(addedLegend);
+            m_visibleLegends.push_back( addedLegend );
         }
     }
-
 }
 
 //--------------------------------------------------------------------------------------------------
-/// 
+///
 //--------------------------------------------------------------------------------------------------
-void RiuViewer::removeColorLegend(caf::TitledOverlayFrame* legend)
+void RiuViewer::removeColorLegend( caf::TitledOverlayFrame* legend )
 {
     overlayItemsRendering()->removeOverlayItem( legend );
-    m_visibleLegends.erase(legend);
+    m_visibleLegends.erase( legend );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -818,7 +817,7 @@ void RiuViewer::optimizeClippingPlanes()
     }
 
     m_gridBoxGenerator->updateFromCamera( mainCamera() );
-    m_comparisonGridBoxGenerator->updateFromCamera(comparisonMainCamera());
+    m_comparisonGridBoxGenerator->updateFromCamera( comparisonMainCamera() );
 
     m_scaleLegend->setDisplayCoordTransform( m_rimView->displayCoordTransform().p() );
     m_scaleLegend->updateFromCamera( mainCamera() );
@@ -914,12 +913,12 @@ void RiuViewer::updateGridBoxData( double                  scaleZ,
 
     m_gridBoxGenerator->createGridBoxParts();
 
-    m_comparisonGridBoxGenerator->setScaleZ(scaleZ);
+    m_comparisonGridBoxGenerator->setScaleZ( scaleZ );
     cvf::Vec3d unscaledComparisonOffset = comparisonViewEyePointOffsett();
-    
+
     unscaledComparisonOffset.z() /= scaleZ;
 
-    m_comparisonGridBoxGenerator->setDisplayModelOffset( displayModelOffset - unscaledComparisonOffset);
+    m_comparisonGridBoxGenerator->setDisplayModelOffset( displayModelOffset - unscaledComparisonOffset );
     m_comparisonGridBoxGenerator->updateFromBackgroundColor( backgroundColor );
     m_comparisonGridBoxGenerator->setGridBoxDomainCoordBoundingBox( domainCoordBoundingBox );
 
@@ -944,7 +943,6 @@ void RiuViewer::showEdgeTickMarksXY( bool enable, bool showAxisLines )
     }
 
     m_showWindowEdgeAxes = enable;
-
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -963,7 +961,6 @@ void RiuViewer::showEdgeTickMarksXZ( bool enable, bool showAxisLines )
     }
 
     m_showWindowEdgeAxes = enable;
-
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1080,7 +1077,6 @@ void RiuViewer::showScaleLegend( bool show )
     {
         overlayItemsRendering()->removeOverlayItem( m_scaleLegend.p() );
     }
-
 }
 
 //--------------------------------------------------------------------------------------------------

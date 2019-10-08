@@ -289,7 +289,7 @@ void RimGeoMechContourMapView::appendContourMapProjectionToModel()
 {
     if ( nativeOrOverrideViewer() && m_contourMapProjection->isChecked() )
     {
-        cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep , isUsingOverrideViewer() );
+        cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer() );
         if ( frameScene )
         {
             cvf::String name = "ContourMapProjection";
@@ -315,7 +315,7 @@ void RimGeoMechContourMapView::appendContourLinesToModel()
 {
     if ( nativeOrOverrideViewer() && m_contourMapProjection->isChecked() )
     {
-        cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer()  );
+        cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer() );
         if ( frameScene )
         {
             cvf::String name = "ContourMapLines";
@@ -372,9 +372,9 @@ void RimGeoMechContourMapView::updateLegends()
         {
             nativeOrOverrideViewer()->removeAllColorLegends();
         }
-        else if (m_contourMapProjection && m_contourMapProjection->legendConfig())
+        else if ( m_contourMapProjection && m_contourMapProjection->legendConfig() )
         {
-            nativeOrOverrideViewer()->removeColorLegend(m_contourMapProjection->legendConfig()->titledOverlayFrame());
+            nativeOrOverrideViewer()->removeColorLegend( m_contourMapProjection->legendConfig()->titledOverlayFrame() );
         }
 
         if ( m_contourMapProjection && m_contourMapProjection->isChecked() )

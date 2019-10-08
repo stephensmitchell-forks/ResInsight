@@ -244,7 +244,7 @@ void RimGeoMechView::createDisplayModel()
     // Remove all existing animation frames from the viewer.
     // The parts are still cached in the RivReservoir geometry and friends
 
-    nativeOrOverrideViewer()->removeAllFrames(isUsingOverrideViewer());
+    nativeOrOverrideViewer()->removeAllFrames( isUsingOverrideViewer() );
 
     if ( isTimeStepDependentDataVisibleInThisOrComparisonView() )
     {
@@ -293,7 +293,7 @@ void RimGeoMechView::createDisplayModel()
 
     if ( isTimeStepDependentDataVisibleInThisOrComparisonView() )
     {
-        if (viewer()) viewer()->setCurrentFrame( m_currentTimeStep );
+        if ( viewer() ) viewer()->setCurrentFrame( m_currentTimeStep );
     }
     else
     {
@@ -324,7 +324,7 @@ void RimGeoMechView::updateCurrentTimeStep()
     {
         if ( nativeOrOverrideViewer() )
         {
-            cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer()  );
+            cvf::Scene* frameScene = nativeOrOverrideViewer()->frame( m_currentTimeStep, isUsingOverrideViewer() );
             if ( frameScene )
             {
                 {
@@ -440,8 +440,8 @@ void RimGeoMechView::updateLegends()
         }
         else
         {
-            nativeOrOverrideViewer()->removeColorLegend(cellResult()->legendConfig->titledOverlayFrame());
-            nativeOrOverrideViewer()->removeColorLegend(m_tensorResults->arrowColorLegendConfig->titledOverlayFrame());
+            nativeOrOverrideViewer()->removeColorLegend( cellResult()->legendConfig->titledOverlayFrame() );
+            nativeOrOverrideViewer()->removeColorLegend( m_tensorResults->arrowColorLegendConfig->titledOverlayFrame() );
         }
 
         this->updateLegendTextAndRanges( cellResult()->legendConfig(), m_currentTimeStep() );

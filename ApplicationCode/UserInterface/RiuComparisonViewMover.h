@@ -25,7 +25,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 
-namespace caf 
+namespace caf
 {
 class Viewer;
 }
@@ -56,5 +56,3 @@ private:
     DragState             m_dragState;
     DragState             m_highlightHandle;
 };
-
-

@@ -44,7 +44,7 @@ RivGridBoxGenerator::RivGridBoxGenerator()
     , m_gridLegendColor( cvf::Color3f::BLACK )
 {
     m_gridBoxModel = new cvf::ModelBasicList();
-    m_gridBoxModel->setName("GridBoxModel");
+    m_gridBoxModel->setName( "GridBoxModel" );
 
     m_scaleZ             = 1.0;
     m_displayModelOffset = cvf::Vec3d::ZERO;
