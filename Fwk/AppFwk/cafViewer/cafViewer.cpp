@@ -133,7 +133,7 @@ caf::Viewer::Viewer(const QGLFormat& format, QWidget* parent)
     m_comparisonViewOffsett(0, 0, 0),
     m_comparisonWindowNormalizedX(0.5),
     m_comparisonWindowNormalizedY(0.0),
-    m_comparisonWindowNormalizedWidth(1.0),
+    m_comparisonWindowNormalizedWidth(0.5),
     m_comparisonWindowNormalizedHeight(1.0)
 {
     #if QT_VERSION >= 0x050000
@@ -338,7 +338,7 @@ const cvf::Vec3d caf::Viewer::comparisonViewEyePointOffsett()
 //--------------------------------------------------------------------------------------------------
 /// 
 //--------------------------------------------------------------------------------------------------
-void caf::Viewer::setComparisonViewScreenArea(int normalizedX, int normalizedY, uint normalizedWidth, uint normalizedHeight)
+void caf::Viewer::setComparisonViewScreenArea(float normalizedX, float normalizedY, float normalizedWidth, float normalizedHeight)
 {
     m_comparisonWindowNormalizedX      = normalizedX;
     m_comparisonWindowNormalizedY      = normalizedY;
@@ -347,6 +347,17 @@ void caf::Viewer::setComparisonViewScreenArea(int normalizedX, int normalizedY, 
 
     updateCamera(width(), height());
     update();
+}
+
+//--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
+cvf::Rectf caf::Viewer::comparisonScreenArea() const 
+{
+    return cvf::Rectf(  m_comparisonWindowNormalizedX
+                      , m_comparisonWindowNormalizedY
+                      , m_comparisonWindowNormalizedWidth
+                      , m_comparisonWindowNormalizedHeight);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -407,9 +418,9 @@ void caf::Viewer::updateCamera(int width, int height)
     m_mainCamera->viewport()->set(0, 0, width, height);
     m_comparisonMainCamera->viewport()->set(0, 0, width, height);
     m_comparisonRenderingScissor->setScissorRectangle(static_cast<int>(width  * m_comparisonWindowNormalizedX),
-                                            static_cast<int>(height * m_comparisonWindowNormalizedY),
-                                            static_cast<int>(width  * m_comparisonWindowNormalizedWidth),
-                                            static_cast<int>(height * m_comparisonWindowNormalizedHeight));
+                                                      static_cast<int>(height * m_comparisonWindowNormalizedY),
+                                                      static_cast<int>(width  * m_comparisonWindowNormalizedWidth),
+                                                      static_cast<int>(height * m_comparisonWindowNormalizedHeight));
 
     if (m_mainCamera->projection() == cvf::Camera::PERSPECTIVE)
     {

@@ -42,6 +42,7 @@
 #include "cvfObject.h"
 #include "cvfCollection.h"
 #include "cvfVector3.h"
+#include "cvfRect.h"
 
 #include "cvfOpenGL.h"
 #include "cafOpenGLWidget.h"
@@ -92,7 +93,8 @@ public:
 
     void                    setComparisonViewEyePointOffsett(const cvf::Vec3d& offset);
     const cvf::Vec3d        comparisonViewEyePointOffsett();
-    void                    setComparisonViewScreenArea(int normalizedX, int normalizedY, uint normalizedWidth, uint normalizedHeight);
+    void                    setComparisonViewScreenArea(float normalizedX, float normalizedY, float normalizedWidth, float normalizedHeight);
+    cvf::Rectf              comparisonScreenArea() const;
 
     // Set the main scene : the scene active when the animation is not active. (Stopped)
     void                    setMainScene(cvf::Scene* scene, bool isForComparisonView = false);

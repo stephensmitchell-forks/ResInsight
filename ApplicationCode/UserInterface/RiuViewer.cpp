@@ -41,6 +41,7 @@
 #include "RiuRmsNavigation.h"
 #include "RiuSimpleHistogramWidget.h"
 #include "RiuViewerCommands.h"
+#include "RiuComparisonViewMover.h"
 
 #include "cafPdmUiSelection3dEditorVisualizer.h"
 
@@ -179,6 +180,8 @@ RiuViewer::RiuViewer( const QGLFormat& format, QWidget* parent )
 
     m_scaleLegend = new caf::OverlayScaleLegend( standardFont );
     m_scaleLegend->setOrientation( caf::OverlayScaleLegend::HORIZONTAL );
+
+    m_comparisonWindowMover = new RiuComparisonViewMover(this);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -447,6 +450,8 @@ void RiuViewer::paintOverlayItems( QPainter* painter )
             }
         }
     }
+
+    m_comparisonWindowMover->paintMoverHandles(painter);
 }
 
 //--------------------------------------------------------------------------------------------------
