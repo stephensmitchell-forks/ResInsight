@@ -410,23 +410,13 @@ void Rim3dView::setCurrentTimeStepAndUpdate( int frameIndex )
 
     if ( Rim3dView* depView = activeComparisonView() )
     {
-        int oldTimeStep            = depView->currentTimeStep();
-        depView->m_currentTimeStep = currentTimeStep();
-        depView->clampCurrentTimestep();
-        double oldScaling = depView->scaleZ();
-        depView->scaleZ   = scaleZ();
+        prepareComparisonView();
 
-        viewer()->setComparisonViewEyePointOffset(
-            RimViewManipulator::calculateEquivalentCamPosOffset( this, depView ) );
-
-        depView->setOverrideViewer( viewer() );
         depView->updateCurrentTimeStep();
         depView->appendAnnotationsToModel();
         depView->appendMeasurementToModel();
 
-        depView->setOverrideViewer( nullptr );
-        depView->m_currentTimeStep = oldTimeStep;
-        depView->scaleZ            = oldScaling;
+        restoreComparisonView();
     }
 
     RimProject* project;
@@ -487,21 +477,11 @@ void Rim3dView::updateCurrentTimeStepAndRedraw()
 
     if ( Rim3dView* depView = activeComparisonView() )
     {
-        int oldTimeStep            = depView->currentTimeStep();
-        depView->m_currentTimeStep = currentTimeStep();
-        depView->clampCurrentTimestep();
-        double oldScaling = depView->scaleZ();
-        depView->scaleZ   = scaleZ();
+        prepareComparisonView();
 
-        viewer()->setComparisonViewEyePointOffset(
-            RimViewManipulator::calculateEquivalentCamPosOffset( this, depView ) );
-
-        depView->setOverrideViewer( viewer() );
         depView->updateCurrentTimeStep();
-        depView->setOverrideViewer( nullptr );
 
-        depView->m_currentTimeStep = oldTimeStep;
-        depView->scaleZ            = oldScaling;
+        restoreComparisonView();
     }
 
     RimProject* project;
@@ -535,28 +515,18 @@ void Rim3dView::createDisplayModelAndRedraw()
 
         if ( Rim3dView* depView = activeComparisonView() )
         {
-            int oldTimeStep            = depView->currentTimeStep();
-            depView->m_currentTimeStep = currentTimeStep();
-            depView->clampCurrentTimestep();
-            double oldScaling = depView->scaleZ();
-            depView->scaleZ   = scaleZ();
+            prepareComparisonView();
 
-            viewer()->setComparisonViewEyePointOffset(
-                RimViewManipulator::calculateEquivalentCamPosOffset( this, depView ) );
-
-            depView->setOverrideViewer( viewer() );
             depView->createDisplayModelAndRedraw();
 
             if ( isTimeStepDependentDataVisibleInThisOrComparisonView() )
             {
-                nativeOrOverrideViewer()->slotSetCurrentFrame(
-                    currentTimeStep() ); // To make the override viewer see the new frame (skeletons) created by createDisplayModelAndRedraw
+                // To make the override viewer see the new frame (skeletons) created by createDisplayModelAndRedraw
+                nativeOrOverrideViewer()->slotSetCurrentFrame( currentTimeStep() );
                 depView->updateCurrentTimeStep();
             }
 
-            depView->setOverrideViewer( nullptr );
-            depView->m_currentTimeStep = oldTimeStep;
-            depView->scaleZ            = oldScaling;
+            restoreComparisonView();
         }
         else if ( viewer() )
         {
@@ -1174,7 +1144,9 @@ void Rim3dView::updateDisplayModelVisibility()
         mask |= intersectionFaultMeshBit;
     }
 
-    viewer()->setEnableMask( mask );
+    viewer()->setEnableMask( mask, false );
+    viewer()->setEnableMask( mask, true );
+
     viewer()->update();
 }
 
@@ -1407,4 +1379,38 @@ Rim3dView* Rim3dView::activeComparisonView() const
     {
         return nullptr;
     }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void Rim3dView::prepareComparisonView()
+{
+    Rim3dView* depView = activeComparisonView();
+    CVF_ASSERT( depView );
+
+    // prepareComparisonView
+    m_comparisonViewOrgTimestep = depView->currentTimeStep();
+    depView->m_currentTimeStep  = currentTimeStep();
+    depView->clampCurrentTimestep();
+
+    m_comparisonViewOrgZScale = depView->scaleZ();
+    depView->scaleZ           = scaleZ();
+
+    viewer()->setComparisonViewEyePointOffset( RimViewManipulator::calculateEquivalentCamPosOffset( this, depView ) );
+
+    depView->setOverrideViewer( viewer() );
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void Rim3dView::restoreComparisonView()
+{
+    Rim3dView* depView = activeComparisonView();
+    CVF_ASSERT( depView );
+
+    depView->setOverrideViewer( nullptr );
+    depView->m_currentTimeStep = m_comparisonViewOrgTimestep;
+    depView->scaleZ            = m_comparisonViewOrgZScale;
 }

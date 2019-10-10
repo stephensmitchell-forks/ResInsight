@@ -300,9 +300,14 @@ private:
     void       setOverrideViewer( RiuViewer* overrideViewer );
     Rim3dView* activeComparisonView() const;
 
+    void prepareComparisonView();
+    void restoreComparisonView();
+
 private:
     QPointer<RiuViewer> m_viewer;
     QPointer<RiuViewer> m_overrideViewer;
+    int                 m_comparisonViewOrgTimestep;
+    double              m_comparisonViewOrgZScale;
 
     caf::PdmField<QString>                 m_name_OBSOLETE;
     caf::PdmChildField<RimViewNameConfig*> m_nameConfig;
