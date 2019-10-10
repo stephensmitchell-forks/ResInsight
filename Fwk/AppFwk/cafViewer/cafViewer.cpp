@@ -130,11 +130,8 @@ caf::Viewer::Viewer(const QGLFormat& format, QWidget* parent)
     m_offscreenViewportWidth(0),
     m_offscreenViewportHeight(0),
     m_parallelProjectionLightDirection(0, 0, -1), // Light directly from behind
-    m_comparisonViewOffsett(0, 0, 0),
-    m_comparisonWindowNormalizedX(0.5),
-    m_comparisonWindowNormalizedY(0.0),
-    m_comparisonWindowNormalizedWidth(0.5),
-    m_comparisonWindowNormalizedHeight(1.0)
+    m_comparisonViewOffset(0, 0, 0),
+    m_comparisonWindowNormalizedRect(0.5f, 0.0f, 0.5f, 1.0f)
 {
     #if QT_VERSION >= 0x050000
     m_layoutWidget = new QWidget(parent);
@@ -322,28 +319,25 @@ cvf::Camera* caf::Viewer::comparisonMainCamera()
 //--------------------------------------------------------------------------------------------------
 /// 
 //--------------------------------------------------------------------------------------------------
-void caf::Viewer::setComparisonViewEyePointOffsett(const cvf::Vec3d& offset)
+void caf::Viewer::setComparisonViewEyePointOffset(const cvf::Vec3d& offset)
 {
-    m_comparisonViewOffsett = offset;
+    m_comparisonViewOffset = offset;
 }
 
 //--------------------------------------------------------------------------------------------------
 /// 
 //--------------------------------------------------------------------------------------------------
-const cvf::Vec3d caf::Viewer::comparisonViewEyePointOffsett()
+const cvf::Vec3d caf::Viewer::comparisonViewEyePointOffset()
 {
-    return m_comparisonViewOffsett;
+    return m_comparisonViewOffset;
 }
 
 //--------------------------------------------------------------------------------------------------
-/// 
+/// setNormalizedComparisonViewRect
 //--------------------------------------------------------------------------------------------------
-void caf::Viewer::setComparisonViewScreenArea(float normalizedX, float normalizedY, float normalizedWidth, float normalizedHeight)
+void caf::Viewer::setComparisonViewVisibleNormalizedRect( const cvf::Rectf& visibleRect )
 {
-    m_comparisonWindowNormalizedX      = normalizedX;
-    m_comparisonWindowNormalizedY      = normalizedY;
-    m_comparisonWindowNormalizedWidth  = normalizedWidth;
-    m_comparisonWindowNormalizedHeight = normalizedHeight;
+    m_comparisonWindowNormalizedRect = visibleRect;
 
     updateCamera(width(), height());
     update();
@@ -352,12 +346,9 @@ void caf::Viewer::setComparisonViewScreenArea(float normalizedX, float normalize
 //--------------------------------------------------------------------------------------------------
 /// 
 //--------------------------------------------------------------------------------------------------
-cvf::Rectf caf::Viewer::comparisonScreenArea() const 
+cvf::Rectf caf::Viewer::comparisonViewVisibleNormalizedRect() const 
 {
-    return cvf::Rectf(  m_comparisonWindowNormalizedX
-                      , m_comparisonWindowNormalizedY
-                      , m_comparisonWindowNormalizedWidth
-                      , m_comparisonWindowNormalizedHeight);
+    return m_comparisonWindowNormalizedRect;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -417,10 +408,10 @@ void caf::Viewer::updateCamera(int width, int height)
 
     m_mainCamera->viewport()->set(0, 0, width, height);
     m_comparisonMainCamera->viewport()->set(0, 0, width, height);
-    m_comparisonRenderingScissor->setScissorRectangle(static_cast<int>(width  * m_comparisonWindowNormalizedX),
-                                                      static_cast<int>(height * m_comparisonWindowNormalizedY),
-                                                      static_cast<int>(width  * m_comparisonWindowNormalizedWidth),
-                                                      static_cast<int>(height * m_comparisonWindowNormalizedHeight));
+    m_comparisonRenderingScissor->setScissorRectangle(static_cast<int>(width  * m_comparisonWindowNormalizedRect.min().x()),
+                                                      static_cast<int>(height * m_comparisonWindowNormalizedRect.min().y()),
+                                                      static_cast<int>(width  * m_comparisonWindowNormalizedRect.width()),
+                                                      static_cast<int>(height * m_comparisonWindowNormalizedRect.height()));
 
     if (m_mainCamera->projection() == cvf::Camera::PERSPECTIVE)
     {
@@ -480,8 +471,8 @@ void caf::Viewer::optimizeClippingPlanes()
         cvf::Vec3d camViewRefPoint;
 
         m_comparisonMainCamera->toLookAt( &camEye, &camViewRefPoint, &camUp );
-        camEye += m_comparisonViewOffsett;
-        camViewRefPoint += m_comparisonViewOffsett;
+        camEye += m_comparisonViewOffset;
+        camViewRefPoint += m_comparisonViewOffset;
         m_comparisonMainCamera->setFromLookAt(camEye, camViewRefPoint, camUp);
 
         if ( calculateNearFarPlanes(m_comparisonMainRendering.p(), navPointOfinterest, &farPlaneDist, &nearPlaneDist) )

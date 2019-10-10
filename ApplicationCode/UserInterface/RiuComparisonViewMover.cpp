@@ -63,13 +63,15 @@ bool RiuComparisonViewMover::eventFilter( QObject* watched, QEvent* event )
                 {
                     QPointF    mousePos     = mEv->windowPos();
                     QPointF    normMousePos = {mousePos.x() / m_viewer->width(), mousePos.y() / m_viewer->height()};
-                    cvf::Rectf normalizedComparisonRect = m_viewer->comparisonScreenArea();
-                    m_viewer->setComparisonViewScreenArea( normMousePos.x(),
-                                                           normalizedComparisonRect.min().y(),
-                                                           ( normalizedComparisonRect.min().x() +
-                                                             normalizedComparisonRect.width() ) -
-                                                               normMousePos.x(),
-                                                           normalizedComparisonRect.height() );
+                    cvf::Rectf orgCompViewWindow = m_viewer->comparisonViewVisibleNormalizedRect();
+
+                    m_viewer->setComparisonViewVisibleNormalizedRect(
+                        cvf::Rectf( normMousePos.x(),
+                                    orgCompViewWindow.min().y(),
+                                    ( orgCompViewWindow.min().x() + orgCompViewWindow.width() ) -
+                                        normMousePos.x(),
+                                    orgCompViewWindow.height() ) );
+
                     return true;
                 }
                 else
@@ -91,7 +93,7 @@ void RiuComparisonViewMover::paintMoverHandles( QPainter* painter )
     if ( !m_viewer->currentScene( true ) ) return;
 
     const int  handleThickness          = 7;
-    cvf::Rectf normalizedComparisonRect = m_viewer->comparisonScreenArea();
+    cvf::Rectf normalizedComparisonRect = m_viewer->comparisonViewVisibleNormalizedRect();
     int        viewerWidth              = m_viewer->width();
     int        viewerHeight             = m_viewer->height();
 
@@ -125,7 +127,7 @@ void RiuComparisonViewMover::paintMoverHandles( QPainter* painter )
 RiuComparisonViewMover::DragState RiuComparisonViewMover::findHandleUnderMouse( const QPoint& mousePos )
 {
     const int  handleThickness          = 7;
-    cvf::Rectf normalizedComparisonRect = m_viewer->comparisonScreenArea();
+    cvf::Rectf normalizedComparisonRect = m_viewer->comparisonViewVisibleNormalizedRect();
     int        viewerWidth              = m_viewer->width();
     int        viewerHeight             = m_viewer->height();
 

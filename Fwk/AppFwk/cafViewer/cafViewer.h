@@ -91,10 +91,11 @@ public:
     cvf::Camera*            mainCamera();
     cvf::Camera*            comparisonMainCamera();
 
-    void                    setComparisonViewEyePointOffsett(const cvf::Vec3d& offset);
-    const cvf::Vec3d        comparisonViewEyePointOffsett();
-    void                    setComparisonViewScreenArea(float normalizedX, float normalizedY, float normalizedWidth, float normalizedHeight);
-    cvf::Rectf              comparisonScreenArea() const;
+    void                    setComparisonViewEyePointOffset(const cvf::Vec3d& offset);
+    const cvf::Vec3d        comparisonViewEyePointOffset();
+
+    void                    setComparisonViewVisibleNormalizedRect( const cvf::Rectf& visibleRect );
+    cvf::Rectf              comparisonViewVisibleNormalizedRect() const;
 
     // Set the main scene : the scene active when the animation is not active. (Stopped)
     void                    setMainScene(cvf::Scene* scene, bool isForComparisonView = false);
@@ -242,18 +243,20 @@ private:
                                         sm_openGLContextGroup;
 
     caf::FrameAnimationControl*         m_animationControl;
+
     cvf::Collection<cvf::Scene>         m_frameScenes;
     cvf::Collection<cvf::Model>         m_staticModels;
 
-    cvf::ref<cvf::Scene>                m_comparisonMainScene;
     cvf::ref<cvf::Rendering>            m_comparisonMainRendering;
-
-    cvf::Collection<cvf::Scene>         m_comparisonFrameScenes;
-    cvf::Collection<cvf::Model>         m_comparisonStaticModels;
     cvf::ref<cvf::Camera>               m_comparisonMainCamera;
 
-    cvf::Vec3d                          m_comparisonViewOffsett;
+    cvf::ref<cvf::Scene>                m_comparisonMainScene;
+    cvf::Collection<cvf::Scene>         m_comparisonFrameScenes;
+    cvf::Collection<cvf::Model>         m_comparisonStaticModels;
+
+    cvf::Vec3d                          m_comparisonViewOffset;
     cvf::ref<cvf::RenderingScissor>     m_comparisonRenderingScissor;
+    cvf::Rectf                          m_comparisonWindowNormalizedRect;
 
     // Poi visualization
     cvf::ref<PointOfInterestVisualizer> m_poiVisualizationManager;
@@ -262,13 +265,6 @@ private:
 
     cvf::ref<GlobalViewerDynUniformSet> m_globalUniformSet;
     cvf::Vec3f                          m_parallelProjectionLightDirection;
-
-    // Comparison view window
-
-    float m_comparisonWindowNormalizedX;
-    float m_comparisonWindowNormalizedY;
-    float m_comparisonWindowNormalizedWidth;
-    float m_comparisonWindowNormalizedHeight;
 
     // Offscreen render objects
     cvf::ref<cvf::FramebufferObject>    m_offscreenFbo;

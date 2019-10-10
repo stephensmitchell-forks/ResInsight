@@ -34,7 +34,7 @@ class RimViewManipulator
 public:
     static void applySourceViewCameraOnDestinationViews( RimGridView*               sourceView,
                                                          std::vector<RimGridView*>& destinationViews );
-    static cvf::Vec3d calculateEquivalentCamPosOffsett(Rim3dView* sourceView, Rim3dView* destView);
+    static cvf::Vec3d calculateEquivalentCamPosOffset(Rim3dView* sourceView, Rim3dView* destView);
 
 private:
     static bool isBoundingBoxesOverlappingOrClose( const cvf::BoundingBox& sourceBB, const cvf::BoundingBox& destBB );

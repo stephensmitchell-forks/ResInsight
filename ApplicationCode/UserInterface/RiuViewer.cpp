@@ -351,6 +351,8 @@ void RiuViewer::setEnableMask( unsigned int mask )
 //--------------------------------------------------------------------------------------------------
 void RiuViewer::paintOverlayItems( QPainter* painter )
 {
+    // Update the legend layout on every redraw as the legends stores their own position, 
+    // and when they are shared between views the positions are overwritten.
     updateLegendLayout();
 
     int columnWidth = 200;
@@ -914,7 +916,7 @@ void RiuViewer::updateGridBoxData( double                  scaleZ,
     m_gridBoxGenerator->createGridBoxParts();
 
     m_comparisonGridBoxGenerator->setScaleZ( scaleZ );
-    cvf::Vec3d unscaledComparisonOffset = comparisonViewEyePointOffsett();
+    cvf::Vec3d unscaledComparisonOffset = comparisonViewEyePointOffset();
 
     unscaledComparisonOffset.z() /= scaleZ;
 

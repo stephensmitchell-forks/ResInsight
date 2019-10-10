@@ -106,11 +106,9 @@ public:
     caf::PdmField<caf::AppEnum<SurfaceModeType>>          surfaceMode;
 
     RiuViewer* viewer() const;
-    RiuViewer* nativeOrOverrideViewer() const;
-    void       setOverrideViewer( RiuViewer* overrideViewer );
-    bool       isUsingOverrideViewer() const;
-    void       setName( const QString& name );
-    QString    name() const;
+
+    void    setName( const QString& name );
+    QString name() const;
 
     int  id() const;
     void setId( int id );
@@ -203,7 +201,10 @@ protected:
     void addAnnotationsToModel( cvf::ModelBasicList* wellPathModelBasicList );
     void addMeasurementToModel( cvf::ModelBasicList* wellPathModelBasicList );
 
-    void createHighlightAndGridBoxDisplayModel();
+    // Override viewer
+
+    RiuViewer* nativeOrOverrideViewer() const;
+    bool       isUsingOverrideViewer() const;
 
     // Implementation of RimNameConfigHolderInterface
     void performAutoNameUpdate() override;
@@ -212,15 +213,14 @@ protected:
 
     virtual void axisLabels( cvf::String* xLabel, cvf::String* yLabel, cvf::String* zLabel ) = 0;
 
-    virtual void createDisplayModel()                                                   = 0;
-    virtual void createPartCollectionFromSelection( cvf::Collection<cvf::Part>* parts ) = 0;
-
+    virtual void createDisplayModel() = 0;
     virtual void updateDisplayModelVisibility();
-    virtual void clampCurrentTimestep() = 0;
+    virtual void clampCurrentTimestep()  = 0;
+    virtual void updateCurrentTimeStep() = 0;
+    virtual void onTimeStepChanged()     = 0;
 
-    virtual void updateCurrentTimeStep()  = 0;
-    virtual void onTimeStepChanged()      = 0;
-    virtual void updateStaticCellColors() = 0;
+    virtual void createPartCollectionFromSelection( cvf::Collection<cvf::Part>* parts ) = 0;
+    virtual void updateStaticCellColors()                                               = 0;
 
     virtual void            updateScaleTransform() = 0;
     virtual cvf::Transform* scaleTransform()       = 0;
@@ -271,21 +271,33 @@ private:
     {
         m_cameraPosition = cameraPosition;
     }
+
     void setCameraPointOfInterest( const cvf::Vec3d& cameraPointOfInterest ) override
     {
         m_cameraPointOfInterest = cameraPointOfInterest;
     }
-    QString               timeStepName( int frameIdx ) const override;
-    void                  endAnimation() override;
+
+    QString timeStepName( int frameIdx ) const override;
+    void    endAnimation() override;
+
     caf::PdmObjectHandle* implementingPdmObject() override
     {
         return this;
     }
+
     void handleMdiWindowClosed() override;
     void setMdiWindowGeometry( const RimMdiWindowGeometry& windowGeometry ) override;
+
+    // Pure private methods
+
+    void createHighlightAndGridBoxDisplayModel();
+
     void appendAnnotationsToModel();
     void appendMeasurementToModel();
 
+    // Pure private methods : Override viewer and comparison view
+
+    void       setOverrideViewer( RiuViewer* overrideViewer );
     Rim3dView* activeComparisonView() const;
 
 private:

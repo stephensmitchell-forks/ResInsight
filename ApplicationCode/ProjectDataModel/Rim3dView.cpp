@@ -416,8 +416,8 @@ void Rim3dView::setCurrentTimeStepAndUpdate( int frameIndex )
         double oldScaling = depView->scaleZ();
         depView->scaleZ   = scaleZ();
 
-        viewer()->setComparisonViewEyePointOffsett(
-            RimViewManipulator::calculateEquivalentCamPosOffsett( this, depView ) );
+        viewer()->setComparisonViewEyePointOffset(
+            RimViewManipulator::calculateEquivalentCamPosOffset( this, depView ) );
 
         depView->setOverrideViewer( viewer() );
         depView->updateCurrentTimeStep();
@@ -493,8 +493,8 @@ void Rim3dView::updateCurrentTimeStepAndRedraw()
         double oldScaling = depView->scaleZ();
         depView->scaleZ   = scaleZ();
 
-        viewer()->setComparisonViewEyePointOffsett(
-            RimViewManipulator::calculateEquivalentCamPosOffsett( this, depView ) );
+        viewer()->setComparisonViewEyePointOffset(
+            RimViewManipulator::calculateEquivalentCamPosOffset( this, depView ) );
 
         depView->setOverrideViewer( viewer() );
         depView->updateCurrentTimeStep();
@@ -541,8 +541,8 @@ void Rim3dView::createDisplayModelAndRedraw()
             double oldScaling = depView->scaleZ();
             depView->scaleZ   = scaleZ();
 
-            viewer()->setComparisonViewEyePointOffsett(
-                RimViewManipulator::calculateEquivalentCamPosOffsett( this, depView ) );
+            viewer()->setComparisonViewEyePointOffset(
+                RimViewManipulator::calculateEquivalentCamPosOffset( this, depView ) );
 
             depView->setOverrideViewer( viewer() );
             depView->createDisplayModelAndRedraw();
@@ -963,8 +963,8 @@ void Rim3dView::updateGridBoxData()
 
         if ( Rim3dView* depView = activeComparisonView() )
         {
-            viewer()->setComparisonViewEyePointOffsett(
-                RimViewManipulator::calculateEquivalentCamPosOffsett( this, depView ) );
+            viewer()->setComparisonViewEyePointOffset(
+                RimViewManipulator::calculateEquivalentCamPosOffset( this, depView ) );
 
             RimCase* destinationOwnerCase = depView->ownerCase();
 
@@ -1004,11 +1004,11 @@ void Rim3dView::updateScaling()
 
     if ( viewer() )
     {
-        cvf::Vec3d poi = nativeOrOverrideViewer()->pointOfInterest();
+        cvf::Vec3d poi = viewer()->pointOfInterest();
         cvf::Vec3d eye, dir, up;
-        eye = nativeOrOverrideViewer()->mainCamera()->position();
-        dir = nativeOrOverrideViewer()->mainCamera()->direction();
-        up  = nativeOrOverrideViewer()->mainCamera()->up();
+        eye = viewer()->mainCamera()->position();
+        dir = viewer()->mainCamera()->direction();
+        up  = viewer()->mainCamera()->up();
 
         eye[2] = poi[2] * scaleZ() / this->scaleTransform()->worldTransform()( 2, 2 ) + ( eye[2] - poi[2] );
         poi[2] = poi[2] * scaleZ() / this->scaleTransform()->worldTransform()( 2, 2 );

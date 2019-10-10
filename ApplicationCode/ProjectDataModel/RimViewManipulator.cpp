@@ -131,7 +131,7 @@ void RimViewManipulator::applySourceViewCameraOnDestinationViews( RimGridView*  
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-cvf::Vec3d RimViewManipulator::calculateEquivalentCamPosOffsett( Rim3dView* sourceView, Rim3dView* destView )
+cvf::Vec3d RimViewManipulator::calculateEquivalentCamPosOffset( Rim3dView* sourceView, Rim3dView* destView )
 {
     cvf::Vec3d soffset         = cvf::Vec3d::ZERO;
     RimCase*   sourceOwnerCase = sourceView->ownerCase();
