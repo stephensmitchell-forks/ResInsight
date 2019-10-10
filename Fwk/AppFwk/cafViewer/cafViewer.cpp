@@ -1308,6 +1308,21 @@ void caf::Viewer::removeAllStaticModels()
 //--------------------------------------------------------------------------------------------------
 /// 
 //--------------------------------------------------------------------------------------------------
+void caf::Viewer::setEnableMask(unsigned int mask, bool isForComparisonView /*= false */)
+{
+    if (!isForComparisonView)
+    {
+        m_mainRendering->setEnableMask(mask);
+    }
+    else
+    {
+        m_comparisonMainRendering->setEnableMask(mask);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+/// 
+//--------------------------------------------------------------------------------------------------
 void caf::Viewer::removeModelFromAllFrames(cvf::Model* model)
 {
     for (size_t i = 0; i < m_frameScenes.size(); i++)

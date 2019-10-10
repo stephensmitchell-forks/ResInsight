@@ -81,7 +81,6 @@ public:
     void                      setOwnerReservoirView( RiuViewerToViewInterface* owner );
     RiuViewerToViewInterface* ownerReservoirView();
     RimViewWindow*            ownerViewWindow() const override;
-    void                      setEnableMask( unsigned int mask );
 
     void showInfoText( bool enable );
     void showVersionInfo( bool enable );

@@ -114,6 +114,8 @@ public:
     void                    removeStaticModel(cvf::Model* model);
     void                    removeAllStaticModels();
 
+    // Part enable/ disable mask
+    void                    setEnableMask( unsigned int mask, bool isForComparisonView = false );
 
     // Recursively traverse all the scenes managed by the viewer and make sure all cached values are up-to-date
     // Use when changing the contents inside the objects in the scene.

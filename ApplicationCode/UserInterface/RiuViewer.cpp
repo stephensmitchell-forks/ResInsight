@@ -341,14 +341,6 @@ void RiuViewer::setOwnerReservoirView( RiuViewerToViewInterface* owner )
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RiuViewer::setEnableMask( unsigned int mask )
-{
-    m_mainRendering->setEnableMask( mask );
-}
-
-//--------------------------------------------------------------------------------------------------
-///
-//--------------------------------------------------------------------------------------------------
 void RiuViewer::paintOverlayItems( QPainter* painter )
 {
     // Update the legend layout on every redraw as the legends stores their own position, 
